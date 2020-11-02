@@ -5,19 +5,30 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-
+// cubes
 const geometry = new THREE.BoxGeometry();
 const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 const cube = new THREE.Mesh( geometry, material );
-scene.add( cube );
+cube.position.set( 0, 0, 0 );
+
+const material2 = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+const cube2 = new THREE.Mesh( geometry, material2 );
+cube2.position.set( 0, 1, 0 );
+
+
+// Group cubes into stack
+const cubeStack = new THREE.Group();
+cubeStack.add(cube);
+cubeStack.add(cube2);
+
+scene.add(cubeStack);
 
 camera.position.z = 5;
 
 function animate() {
 	requestAnimationFrame( animate );
 
-	cube.rotation.x += 0.01;
-	cube.rotation.y += 0.01;
+	cubeStack.rotateY(0.01);
 
 	renderer.render( scene, camera );
 }
