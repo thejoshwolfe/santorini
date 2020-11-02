@@ -23,6 +23,20 @@ cubeStack.add(cube2);
 
 scene.add(cubeStack);
 
+// Add lighting
+const skyColor = 0xB1E1FF;  // light blue
+const groundColor = 0xB97A20;  // brownish orange
+const intensity = 1;
+const ambientLight = new THREE.HemisphereLight(skyColor, groundColor, intensity);
+scene.add(ambientLight);
+
+const color = 0xFFFFFF;
+const light = new THREE.DirectionalLight(color, intensity);
+light.position.set(0, 20, 0);
+light.target.position.set(0, 0, 0);
+scene.add(light);
+scene.add(light.target);
+
 camera.position.z = 5;
 
 function animate() {
