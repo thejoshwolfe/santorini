@@ -6,21 +6,42 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // cubes
-const midCube = new THREE.BoxGeometry(.9, .9, .9);
+const blockApothems = [
+	0.9, // base
+	0.8, // mid
+	0.7, // top
+];
+const blockHeights = [
+	0.7,  // base
+	0.65, // mid
+	0.6,  // top
+];
+const blockYPositions = [
+	blockHeights[0] / 2,
+	blockHeights[0] + blockHeights[1] / 2,
+	blockHeights[0] + blockHeights[1] + blockHeights[2] / 2,
+];
+const blockGeometries = [0, 1, 2].map(i => {
+	return new THREE.BoxGeometry(blockApothems[i], blockHeights[i], blockApothems[i]);
+});
+
 const material = new THREE.MeshLambertMaterial();
-const cube = new THREE.Mesh(midCube, material);
-cube.position.set(0, 1, 0);
 
-const baseCube = new THREE.BoxGeometry();
-const cube2 = new THREE.Mesh(baseCube, material);
-cube2.position.set(0, 0, 0);
-
-// Group cubes into stack
-const cubeStack = new THREE.Group();
-cubeStack.add(cube);
-cubeStack.add(cube2);
-
-scene.add(cubeStack);
+[
+	[0, 0],
+	[1, 2],
+	[-1, 0],
+	[-2, -2],
+	[-2, 2],
+	[2, 2],
+	[2, -2],
+].forEach(([x, y]) => {
+	[0, 1, 2].forEach(i => {
+		const block = new THREE.Mesh(blockGeometries[i], material);
+		block.position.set(x, blockYPositions[i], y);
+		scene.add(block);
+	});
+});
 
 // Add lighting
 const skyColor = 0xB1E1FF;  // light blue
@@ -53,8 +74,6 @@ function animate() {
 	requestAnimationFrame(animate);
 
 	rotateViewY(0.01);
-
-	//cubeStack.rotateY(0.01);
 
 	renderer.render(scene, camera);
 }
