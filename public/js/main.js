@@ -1,5 +1,6 @@
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const fieldOfViewDegrees = 40;
+const camera = new THREE.PerspectiveCamera(fieldOfViewDegrees, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -12,9 +13,9 @@ const blockApothems = [
 	0.7, // top
 ];
 const blockHeights = [
-	0.7,  // base
-	0.65, // mid
-	0.6,  // top
+	0.6,  // base
+	0.55, // mid
+	0.5,  // top
 ];
 const blockYPositions = [
 	blockHeights[0] / 2,
@@ -28,15 +29,18 @@ const blockGeometries = [0, 1, 2].map(i => {
 const material = new THREE.MeshLambertMaterial();
 
 [
-	[0, 0],
-	[1, 2],
-	[-1, 0],
+	[0, 0, 3],
+	[1, 2, 2],
+	[-1, 0, 1],
+	[1, 0, 1],
+	[1, 1, 2],
 	[-2, -2],
 	[-2, 2],
 	[2, 2],
 	[2, -2],
-].forEach(([x, y]) => {
+].forEach(([x, y, height]) => {
 	[0, 1, 2].forEach(i => {
+		if (i >= height) return;
 		const block = new THREE.Mesh(blockGeometries[i], material);
 		block.position.set(x, blockYPositions[i], y);
 		scene.add(block);
@@ -57,15 +61,15 @@ light.target.position.set(0, 0, 0);
 scene.add(light);
 scene.add(light.target);
 
-let cameraAngle = 0;
+let cameraAngleY = 0;
+let cameraAngleDown = 0.95;
 function rotateViewY(delta) {
-	const viewRadius = 5;
-	const viewHeight = 5;
-	cameraAngle += delta;
+	const viewRadius = 9 / (fieldOfViewDegrees/180 * Math.PI);
+	cameraAngleY += delta;
 	camera.position.set(
-		viewRadius * Math.cos(cameraAngle),
-		viewHeight,
-		viewRadius * Math.sin(cameraAngle));
+		viewRadius * Math.cos(cameraAngleY) * Math.cos(cameraAngleDown),
+		viewRadius * Math.sin(cameraAngleDown),
+		viewRadius * Math.sin(cameraAngleY) * Math.cos(cameraAngleDown));
 	camera.lookAt(0, 0, 0);
 }
 rotateViewY(Math.PI/4);
@@ -73,7 +77,7 @@ rotateViewY(Math.PI/4);
 function animate() {
 	requestAnimationFrame(animate);
 
-	rotateViewY(0.01);
+	rotateViewY(0.002);
 
 	renderer.render(scene, camera);
 }
