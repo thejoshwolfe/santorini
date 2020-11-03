@@ -34,10 +34,10 @@ const material = new THREE.MeshLambertMaterial();
 	[-1, 0, 1],
 	[1, 0, 1],
 	[1, 1, 2],
-	[-2, -2],
-	[-2, 2],
-	[2, 2],
-	[2, -2],
+	[-2, -2, 3],
+	[-2, 2, 3],
+	[2, 2, 3],
+	[2, -2, 3],
 ].forEach(([x, y, height]) => {
 	[0, 1, 2].forEach(i => {
 		if (i >= height) return;
