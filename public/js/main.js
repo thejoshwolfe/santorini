@@ -9,12 +9,11 @@ document.body.appendChild( renderer.domElement );
 const midCube = new THREE.BoxGeometry(.9, .9, .9);
 const material = new THREE.MeshLambertMaterial();
 const cube = new THREE.Mesh( midCube, material );
-cube.position.set( 0, -1, 0 );
+cube.position.set(0, 1, 0);
 
 const baseCube = new THREE.BoxGeometry();
-const material2 = new THREE.MeshLambertMaterial();
-const cube2 = new THREE.Mesh( baseCube, material2 );
-cube2.position.set( 0, -2, 0 );
+const cube2 = new THREE.Mesh( baseCube, material );
+cube2.position.set(0, 0, 0);
 
 // Group cubes into stack
 const cubeStack = new THREE.Group();
@@ -37,12 +36,25 @@ light.target.position.set(0, 0, 0);
 scene.add(light);
 scene.add(light.target);
 
-camera.position.z = 5;
+let cameraAngle = 0;
+function rotateViewY(delta) {
+	const viewRadius = 5;
+	const viewHeight = 5;
+	cameraAngle += delta;
+	camera.position.set(
+		viewRadius * Math.cos(cameraAngle),
+		viewHeight,
+		viewRadius * Math.sin(cameraAngle));
+	camera.lookAt(0, 0, 0);
+}
+rotateViewY(Math.PI/4);
 
 function animate() {
 	requestAnimationFrame( animate );
 
-	cubeStack.rotateY(0.01);
+	rotateViewY(0.01);
+
+	//cubeStack.rotateY(0.01);
 
 	renderer.render( scene, camera );
 }
