@@ -1,18 +1,18 @@
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
 // cubes
 const midCube = new THREE.BoxGeometry(.9, .9, .9);
 const material = new THREE.MeshLambertMaterial();
-const cube = new THREE.Mesh( midCube, material );
+const cube = new THREE.Mesh(midCube, material);
 cube.position.set(0, 1, 0);
 
 const baseCube = new THREE.BoxGeometry();
-const cube2 = new THREE.Mesh( baseCube, material );
+const cube2 = new THREE.Mesh(baseCube, material);
 cube2.position.set(0, 0, 0);
 
 // Group cubes into stack
@@ -50,13 +50,13 @@ function rotateViewY(delta) {
 rotateViewY(Math.PI/4);
 
 function animate() {
-	requestAnimationFrame( animate );
+	requestAnimationFrame(animate);
 
 	rotateViewY(0.01);
 
 	//cubeStack.rotateY(0.01);
 
-	renderer.render( scene, camera );
+	renderer.render(scene, camera);
 }
 animate();
 
