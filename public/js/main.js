@@ -6,8 +6,15 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+const material = new THREE.MeshLambertMaterial();
+
+// ground
+const ground = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), material);
+ground.position.set(0, -0.5, 0);
+scene.add(ground);
+
 // cubes
-const blockApothems = [
+const blockSideLengths = [
 	0.9, // base
 	0.8, // mid
 	0.7, // top
@@ -23,10 +30,8 @@ const blockYPositions = [
 	blockHeights[0] + blockHeights[1] + blockHeights[2] / 2,
 ];
 const blockGeometries = [0, 1, 2].map(i => {
-	return new THREE.BoxGeometry(blockApothems[i], blockHeights[i], blockApothems[i]);
+	return new THREE.BoxGeometry(blockSideLengths[i], blockHeights[i], blockSideLengths[i]);
 });
-
-const material = new THREE.MeshLambertMaterial();
 
 [
 	[0, 0, 3],
