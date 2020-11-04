@@ -9,9 +9,9 @@ document.body.appendChild(renderer.domElement);
 const material = new THREE.MeshLambertMaterial();
 
 // ground
-const ground = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), material);
-ground.position.set(0, -0.5, 0);
-scene.add(ground);
+const theGround = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), material);
+theGround.position.set(0, -0.5, 0);
+scene.add(theGround);
 
 // cubes
 const blockSideLengths = [
@@ -33,6 +33,17 @@ const blockGeometries = [0, 1, 2].map(i => {
 	return new THREE.BoxGeometry(blockSideLengths[i], blockHeights[i], blockSideLengths[i]);
 });
 
+let boardState = new BoardState();
+
+function createBuilding(x, y, height) {
+	const i = height - 1;
+	const block = new THREE.Mesh(blockGeometries[i], material);
+	block.position.set(x, blockYPositions[i], y);
+	block.userData.boardPosition = {x, y, height};
+	boardState.placeBuilding(block);
+	scene.add(block);
+}
+
 [
 	[0, 0, 3],
 	[1, 2, 2],
@@ -43,12 +54,11 @@ const blockGeometries = [0, 1, 2].map(i => {
 	[-2, 2, 3],
 	[2, 2, 3],
 	[2, -2, 3],
-].forEach(([x, y, height]) => {
+].forEach(([x, y, stackHeight]) => {
 	[0, 1, 2].forEach(i => {
-		if (i >= height) return;
-		const block = new THREE.Mesh(blockGeometries[i], material);
-		block.position.set(x, blockYPositions[i], y);
-		scene.add(block);
+		const height = i + 1;
+		if (height > stackHeight) return;
+		createBuilding(x, y, height);
 	});
 });
 
@@ -66,6 +76,7 @@ light.target.position.set(0, 0, 0);
 scene.add(light);
 scene.add(light.target);
 
+// camera
 let cameraAngleY = 0;
 let cameraAngleDown = 0.95;
 function rotateViewY(delta) {
@@ -77,14 +88,67 @@ function rotateViewY(delta) {
 		viewRadius * Math.sin(cameraAngleY) * Math.cos(cameraAngleDown));
 	camera.lookAt(0, 0, 0);
 }
+// initialize camera position
 rotateViewY(Math.PI/4);
 
+
+// mouse support
+const raycaster = new THREE.Raycaster();
+// each coord in the range (-1, +1).
+const mousePosition = new THREE.Vector2();
+let mouseBoardPosition = null; // {x, y, height};
+
+function updateMouseOverObject() {
+	raycaster.setFromCamera(mousePosition, camera);
+	mouseBoardPosition = (() => {
+		const intersects = raycaster.intersectObjects(scene.children);
+		if (intersects.length == 0) return null;
+		// select the nearest one.
+		intersects.sort((a, b) => {
+			return a.distance - b.distance;
+		});
+		const {object, point} = intersects[0];
+		let x, y;
+		if (object === theGround) {
+			x = Math.floor(point.x + 0.5);
+			y = Math.floor(point.z + 0.5);
+		} else {
+			({x, y} = object.userData.boardPosition);
+		}
+		let height = boardState.getBuildingHeight(x, y);
+		if (height === 3) return null; // TODO: domes
+		// want to build one higher
+		height += 1;
+		return {x, y, height};
+	})();
+}
+function onMouseMove(event) {
+	mousePosition.x = event.clientX / window.innerWidth * 2 - 1;
+	mousePosition.y = -(event.clientY / window.innerHeight * 2 - 1);
+}
+window.addEventListener("mousemove", onMouseMove, false);
+
+function onMouseDown(event) {
+	if (mouseBoardPosition == null) return;
+	const {x, y, height} = mouseBoardPosition;
+	createBuilding(x, y, height);
+}
+window.addEventListener("mousedown", onMouseDown, false);
+
+
+// main loop
 function animate() {
 	requestAnimationFrame(animate);
 
+	// spin the camera gently
 	rotateViewY(0.002);
 
+	// update mouse over object given the new camera position
+	updateMouseOverObject();
+
+	// render
 	renderer.render(scene, camera);
 }
-animate();
 
+// begin
+animate();
