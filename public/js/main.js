@@ -6,13 +6,17 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const buildingMaterial = new THREE.MeshLambertMaterial({color: 0xD6F8D6});
-const groundMaterial = new THREE.MeshLambertMaterial({color: 0x7FC6A4});
-
 // ground
-const theGround = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), groundMaterial);
-theGround.position.set(0, -0.5, 0);
+const theGround = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), cliffMaterial);
+theGround.position.set(0, -0.50, 0);
 scene.add(theGround);
+
+const boardPlane = new THREE.PlaneGeometry(5, 5);
+boardPlane.rotateX(-Math.PI / 2);
+const grassField = new THREE.Mesh(boardPlane, grassMaterial);
+grassField.position.set(0, 0, 0);
+scene.add(grassField);
+
 
 // cubes
 const blockSideLengths = [
@@ -59,10 +63,9 @@ function createBuilding(x, y, height) {
 	});
 });
 
-const coneHeight = 0.7;
-const coneGeometry = new THREE.ConeGeometry(0.3, coneHeight);
-function createPawn(x, y) {
-	const cone = new THREE.Mesh(coneGeometry, groundMaterial);
+function createPawn(x, y, player) {
+	const material = player ? pawnOneMaterial : pawnTwoMaterial;
+	const cone = new THREE.Mesh(coneGeometry, material);
 	const height = boardState.getBuildingHeight(x, y);
 	cone.position.set(x, (height === 0 ? 0 : blockYPositions[height - 1]) + coneHeight, y);
 	cone.userData.boardPosition = {x, y, height};
@@ -71,10 +74,12 @@ function createPawn(x, y) {
 }
 
 [
-	[0, 0],
-	[2, 2],
-].forEach(([x, y]) => {
-	createPawn(x, y);
+	[0, 0, true],
+	[2, 2, true],
+	[1, 2, false],
+	[2, 1, false],
+].forEach(([x, y, player]) => {
+	createPawn(x, y, player);
 });
 
 addLighting(scene);
