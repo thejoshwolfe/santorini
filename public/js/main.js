@@ -33,6 +33,7 @@ const blockYPositions = [
 	blockHeights[0] / 2,
 	blockHeights[0] + blockHeights[1] / 2,
 	blockHeights[0] + blockHeights[1] + blockHeights[2] / 2,
+	blockHeights[0] + blockHeights[1] + blockHeights[2] / 2 + 0.5
 ];
 const blockGeometries = [0, 1, 2].map(i => {
 	return new THREE.BoxGeometry(blockSideLengths[i], blockHeights[i], blockSideLengths[i]);
@@ -42,7 +43,13 @@ let boardState = new BoardState();
 
 function createBuilding(x, y, height) {
 	const i = height - 1;
-	const block = new THREE.Mesh(blockGeometries[i], buildingMaterial);
+
+	let block;
+	if (height === 4) {
+		block = new THREE.Mesh(domeGeometry, domeMaterial);
+	} else {
+	 	block = new THREE.Mesh(blockGeometries[i], buildingMaterial);
+	}
 	block.position.set(x, blockYPositions[i], y);
 	block.userData.boardPosition = {x, y, height};
 	boardState.placeBuilding(block);
@@ -54,7 +61,7 @@ function createBuilding(x, y, height) {
 	[1, 2, 2],
 	[-1, 0, 1],
 	[1, 0, 1],
-	[1, 1, 2],
+	[1, 1, 4],
 ].forEach(([x, y, stackHeight]) => {
 	[0, 1, 2].forEach(i => {
 		const height = i + 1;
