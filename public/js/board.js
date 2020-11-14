@@ -1,15 +1,13 @@
 class BoardState {
 	constructor() {
 		// numbers from 0 - 3 representing the non-dome building height.
-		this.buildingHeights = [];
+		this.buildingHeights = [...Array(25)].map(() => 0);
 
-		// arrays of THREE objects from base to dome.
-		this.objectStacks = [];
+		// TODO: something
+		this.occupants = [...Array(25)].map(() => null);
 
-		for (let i = 0; i < 25; i++) {
-			this.buildingHeights.push(0);
-			this.objectStacks.push([]);
-		}
+		// arrays of THREE objects from base up.
+		this.objectStacks = [...Array(25)].map(() => []);
 	}
 
 	// x and y should be in the range [-2, 2].
@@ -31,6 +29,10 @@ class BoardState {
 
 		this.buildingHeights[index] = height;
 		this.objectStacks[index].push(object);
+	}
+
+	getOccupant(x, y) {
+		return this.occupants[this.coordToIndex(x, y)];
 	}
 
 	// converts x and y in the range [-2, 2] to an index from [0, 24].

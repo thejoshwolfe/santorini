@@ -6,10 +6,11 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const material = new THREE.MeshLambertMaterial();
+const buildingMaterial = new THREE.MeshLambertMaterial({color: 0xD6F8D6});
+const groundMaterial = new THREE.MeshLambertMaterial({color: 0x7FC6A4});
 
 // ground
-const theGround = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), material);
+const theGround = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), groundMaterial);
 theGround.position.set(0, -0.5, 0);
 scene.add(theGround);
 
@@ -37,7 +38,7 @@ let boardState = new BoardState();
 
 function createBuilding(x, y, height) {
 	const i = height - 1;
-	const block = new THREE.Mesh(blockGeometries[i], material);
+	const block = new THREE.Mesh(blockGeometries[i], buildingMaterial);
 	block.position.set(x, blockYPositions[i], y);
 	block.userData.boardPosition = {x, y, height};
 	boardState.placeBuilding(block);
@@ -50,16 +51,29 @@ function createBuilding(x, y, height) {
 	[-1, 0, 1],
 	[1, 0, 1],
 	[1, 1, 2],
-	[-2, -2, 3],
-	[-2, 2, 3],
-	[2, 2, 3],
-	[2, -2, 3],
 ].forEach(([x, y, stackHeight]) => {
 	[0, 1, 2].forEach(i => {
 		const height = i + 1;
 		if (height > stackHeight) return;
 		createBuilding(x, y, height);
 	});
+});
+
+const coneGeometry = new THREE.ConeGeometry(0.3, 0.7);
+function createPawn(x, y) {
+	const cone = new THREE.Mesh(coneGeometry, groundMaterial);
+	const height = boardState.getBuildingHeight(x, y);
+	cone.position.set(x, (height === 0 ? 0 : blockYPositions[height - 1]) + 3, y);
+	cone.userData.boardPosition = {x, y, height};
+	//boardState.placePawn(cone);
+	scene.add(cone);
+}
+
+[
+	[0, 0],
+	[2, 2],
+].forEach(([x, y]) => {
+	createPawn(x, y);
 });
 
 // Add lighting
@@ -69,12 +83,17 @@ const intensity = 1;
 const ambientLight = new THREE.HemisphereLight(skyColor, groundColor, intensity);
 scene.add(ambientLight);
 
-const color = 0xFFFFFF;
-const light = new THREE.DirectionalLight(color, intensity);
-light.position.set(0, 20, 0);
+const light = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+light.position.set(5, 20, 10);
 light.target.position.set(0, 0, 0);
 scene.add(light);
 scene.add(light.target);
+
+const secondLight = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+secondLight.position.set(-10, 20, -5);
+secondLight.target.position.set(0, 0, 0);
+scene.add(secondLight);
+scene.add(secondLight.target);
 
 // camera
 let cameraAngleY = 0;
