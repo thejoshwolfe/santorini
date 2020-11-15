@@ -6,9 +6,14 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+// layer allocations
+const RENDER_LAYER = 0; // enabled by default
+const INTERACT_LAYER = 1;
+
 // ground
 const theGround = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), cliffMaterial);
 theGround.position.set(0, -0.50, 0);
+theGround.layers.enable(INTERACT_LAYER);
 scene.add(theGround);
 
 const boardPlane = new THREE.PlaneGeometry(5, 5);
@@ -52,6 +57,7 @@ function createBuilding(x, y, height) {
 	}
 	block.position.set(x, blockYPositions[i], y);
 	block.userData.boardPosition = {x, y, height};
+	block.layers.enable(INTERACT_LAYER);
 	boardState.placeBuilding(block);
 	scene.add(block);
 }
@@ -76,6 +82,7 @@ function createPawn(x, y, player) {
 	const height = boardState.getBuildingHeight(x, y);
 	cone.position.set(x, (height === 0 ? 0 : blockYPositions[height - 1]) + coneHeight, y);
 	cone.userData.boardPosition = {x, y, height};
+	cone.layers.enable(INTERACT_LAYER);
 	//boardState.placePawn(cone);
 	scene.add(cone);
 }
@@ -118,14 +125,15 @@ rotateViewY(Math.PI/4);
 
 
 // mouse support
-const raycaster = new THREE.Raycaster();
 // each coord in the range (-1, +1).
 const mousePosition = new THREE.Vector2();
 let mouseBoardPosition = null; // {x, y, height};
 
 function updateMouseOverObject() {
-	raycaster.setFromCamera(mousePosition, camera);
 	mouseBoardPosition = (() => {
+		const raycaster = new THREE.Raycaster();
+		raycaster.setFromCamera(mousePosition, camera);
+		raycaster.layers.set(INTERACT_LAYER);
 		const intersects = raycaster.intersectObjects(scene.children);
 		if (intersects.length == 0) return null;
 		// select the nearest one.
@@ -150,6 +158,19 @@ function updateMouseOverObject() {
 function onMouseMove(event) {
 	mousePosition.x = event.clientX / window.innerWidth * 2 - 1;
 	mousePosition.y = -(event.clientY / window.innerHeight * 2 - 1);
+
+	if (isDragingView) {
+		// right click drag
+		const {movementX, movementY} = event;
+		const dragCameraScaleX = Math.PI / window.innerWidth;
+		const dragCameraScaleY = Math.PI / window.innerHeight;
+		// update mouse over object given the new camera position
+		rotateView2d(movementX * dragCameraScaleX, movementY * dragCameraScaleY);
+		updateMouseOverObject();
+	} else {
+		// normal movement
+		updateMouseOverObject();
+	}
 }
 window.addEventListener("mousemove", onMouseMove, false);
 
@@ -189,22 +210,6 @@ function onMouseUp(event) {
 	isDragingView = false;
 }
 window.addEventListener("mouseup", onMouseUp, false);
-
-function onMouseMove(event) {
-	if (isDragingView) {
-		// right click drag
-		const {movementX, movementY} = event;
-		const dragCameraScaleX = Math.PI / 400;
-		const dragCameraScaleY = Math.PI / 800;
-		// update mouse over object given the new camera position
-		rotateView2d(movementX * dragCameraScaleX, movementY * dragCameraScaleY);
-		updateMouseOverObject();
-	} else {
-		// normal movement
-		updateMouseOverObject();
-	}
-}
-window.addEventListener("mousemove", onMouseMove, false);
 
 function onContextMenu(event) {
 	event.preventDefault();
