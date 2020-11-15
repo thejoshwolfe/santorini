@@ -34,11 +34,16 @@ const blockHeights = [
 	0.55, // mid
 	0.5,  // top
 ];
+const elevationLevels = [
+	0,
+	blockHeights[0],
+	blockHeights[0] + blockHeights[1],
+	blockHeights[0] + blockHeights[1] + blockHeights[2],
+];
 const blockYPositions = [
-	blockHeights[0] / 2,
-	blockHeights[0] + blockHeights[1] / 2,
-	blockHeights[0] + blockHeights[1] + blockHeights[2] / 2,
-	blockHeights[0] + blockHeights[1] + blockHeights[2] / 2 + 0.5
+	elevationLevels[0] + blockHeights[0] / 2,
+	elevationLevels[1] + blockHeights[1] / 2,
+	elevationLevels[2] + blockHeights[2] / 2,
 ];
 const blockGeometries = [0, 1, 2].map(i => {
 	return new THREE.BoxGeometry(blockSideLengths[i], blockHeights[i], blockSideLengths[i]);
@@ -49,12 +54,7 @@ let boardState = new BoardState();
 function createBuilding(x, y, height) {
 	const i = height - 1;
 
-	let block;
-	if (height === 4) {
-		block = new THREE.Mesh(domeGeometry, domeMaterial);
-	} else {
-	 	block = new THREE.Mesh(blockGeometries[i], buildingMaterial);
-	}
+	const block = new THREE.Mesh(blockGeometries[i], buildingMaterial);
 	block.position.set(x, blockYPositions[i], y);
 	block.userData.boardPosition = {x, y, height};
 	block.layers.enable(INTERACT_LAYER);
@@ -67,7 +67,13 @@ function createBuilding(x, y, height) {
 	[1, 2, 2],
 	[-1, 0, 1],
 	[1, 0, 1],
-	[1, 1, 4],
+
+	[-1, -1, 1],
+	[0, -1, 2],
+	[1, -1, 3],
+	[-1, -2, 1],
+	[0, -2, 2],
+	[1, -2, 3],
 ].forEach(([x, y, stackHeight]) => {
 	[0, 1, 2].forEach(i => {
 		const height = i + 1;
@@ -76,22 +82,41 @@ function createBuilding(x, y, height) {
 	});
 });
 
+function createDome(x, y) {
+	const height = boardState.getBuildingHeight(x, y) + 1;
+	const dome = new THREE.Mesh(domeGeometry, domeMaterial);
+	dome.position.set(x, elevationLevels[height - 1] + 0.3, y);
+	dome.userData.boardPosition = {x, y, height};
+	dome.layers.enable(INTERACT_LAYER);
+	boardState.placeDome(dome);
+	scene.add(dome);
+}
+
+[
+	[-2, -1],
+	[-1, -1],
+	[0, -1],
+	[1, -1],
+].forEach(([x, y]) => {
+	createDome(x, y);
+});
+
 function createPawn(x, y, player) {
 	const material = player ? pawnOneMaterial : pawnTwoMaterial;
 	const cone = new THREE.Mesh(coneGeometry, material);
-	const height = boardState.getBuildingHeight(x, y);
-	cone.position.set(x, (height === 0 ? 0 : blockYPositions[height - 1]) + coneHeight, y);
+	const height = boardState.getBuildingHeight(x, y) + 1;
+	cone.position.set(x, elevationLevels[height - 1] + coneHeight, y);
 	cone.userData.boardPosition = {x, y, height};
 	cone.layers.enable(INTERACT_LAYER);
-	//boardState.placePawn(cone);
+	boardState.placePawn(cone);
 	scene.add(cone);
 }
 
 [
-	[0, 0, true],
-	[2, 2, true],
-	[1, 2, false],
-	[2, 1, false],
+	[-2, -2, true],
+	[-1, -2, true],
+	[0, -2, false],
+	[1, -2, false],
 ].forEach(([x, y, player]) => {
 	createPawn(x, y, player);
 });
@@ -198,6 +223,7 @@ function onMouseDown(event) {
 			if (mouseBoardPosition == null) return;
 			const {x, y, height} = mouseBoardPosition;
 			createBuilding(x, y, height);
+			updateMouseOverObject();
 			return;
 		case 2: // right click
 			isDragingView = true;
