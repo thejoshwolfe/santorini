@@ -85,7 +85,7 @@ function createBuilding(x, y, height) {
 function createDome(x, y) {
 	const height = boardState.getBuildingHeight(x, y) + 1;
 	const dome = new THREE.Mesh(domeGeometry, domeMaterial);
-	dome.position.set(x, elevationLevels[height - 1] + 0.3, y);
+	dome.position.set(x, elevationLevels[height - 1] + domeHeight - domeRadius, y);
 	dome.userData.boardPosition = {x, y, height};
 	dome.layers.enable(INTERACT_LAYER);
 	boardState.placeDome(dome);

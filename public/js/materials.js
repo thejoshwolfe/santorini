@@ -20,5 +20,7 @@ const domeMaterial = new THREE.MeshBasicMaterial({color: DOME_COLOR});
 // Geometry
 const coneHeight = 0.7;
 const coneGeometry = new THREE.ConeGeometry(0.3, coneHeight);
-const domeGeometry = new THREE.SphereGeometry(.4, 15, 15, 0, Math.PI * 2, Math.PI / 4, Math.PI);
+const domeRadius = 0.35;
+const domeHeight = 0.23;
+const domeGeometry = new THREE.SphereGeometry(domeRadius, 15, 15, 0, Math.PI * 2, 0, Math.acos(1 - domeHeight / domeRadius));
 
