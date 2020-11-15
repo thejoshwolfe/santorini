@@ -150,53 +150,53 @@ const CTRL  = 1 << 1;
 const ALT   = 1 << 2;
 const META  = 1 << 3;
 function getModifiers(event) {
-  let modifiers = 0;
-  if (event.shiftKey) modifiers |= SHIFT;
-  if (event.ctrlKey)  modifiers |= CTRL;
-  if (event.altKey)   modifiers |= ALT;
-  if (event.metaKey)  modifiers |= META;
-  return modifiers;
+	let modifiers = 0;
+	if (event.shiftKey) modifiers |= SHIFT;
+	if (event.ctrlKey)  modifiers |= CTRL;
+	if (event.altKey)   modifiers |= ALT;
+	if (event.metaKey)  modifiers |= META;
+	return modifiers;
 }
 
 function onMouseDown(event) {
-  const modifiers = getModifiers(event);
-  if (modifiers !== 0) return;
-  event.preventDefault();
-  switch (event.button) {
-    case 0: // left click
-      if (mouseBoardPosition == null) return;
-      const {x, y, height} = mouseBoardPosition;
-      createBuilding(x, y, height);
-      return;
-    case 2: // right click
-      isDragingView = true;
-      return;
-  }
+	const modifiers = getModifiers(event);
+	if (modifiers !== 0) return;
+	event.preventDefault();
+	switch (event.button) {
+		case 0: // left click
+			if (mouseBoardPosition == null) return;
+			const {x, y, height} = mouseBoardPosition;
+			createBuilding(x, y, height);
+			return;
+		case 2: // right click
+			isDragingView = true;
+			return;
+	}
 }
 window.addEventListener("mousedown", onMouseDown, false);
 
 function onMouseUp(event) {
-  isDragingView = false;
+	isDragingView = false;
 }
 window.addEventListener("mouseup", onMouseUp, false);
 
 function onMouseMove(event) {
-  if (isDragingView) {
-    // right click drag
-    const {movementX, movementY} = event;
-    // update mouse over object given the new camera position
-    rotateViewY(movementX);
-    updateMouseOverObject();
-  } else {
-    // normal movement
-    updateMouseOverObject();
-  }
+	if (isDragingView) {
+		// right click drag
+		const {movementX, movementY} = event;
+		// update mouse over object given the new camera position
+		rotateViewY(movementX);
+		updateMouseOverObject();
+	} else {
+		// normal movement
+		updateMouseOverObject();
+	}
 }
 window.addEventListener("mousemove", onMouseMove, false);
 
 function onContextMenu(event) {
-  event.preventDefault();
-  return false;
+	event.preventDefault();
+	return false;
 }
 window.addEventListener("contextmenu", onContextMenu, false);
 
