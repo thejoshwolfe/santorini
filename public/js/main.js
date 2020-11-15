@@ -105,7 +105,7 @@ function createPawn(x, y, player) {
 	const material = player ? pawnOneMaterial : pawnTwoMaterial;
 	const cone = new THREE.Mesh(coneGeometry, material);
 	const height = boardState.getBuildingHeight(x, y) + 1;
-	cone.position.set(x, elevationLevels[height - 1] + coneHeight, y);
+	cone.position.set(x, elevationLevels[height - 1] + coneHeight / 2, y);
 	cone.userData.boardPosition = {x, y, height};
 	cone.layers.enable(INTERACT_LAYER);
 	boardState.placePawn(cone);
