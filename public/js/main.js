@@ -94,6 +94,16 @@ addLighting(scene);
 // camera
 let cameraAngleY = 0;
 let cameraAngleDown = 0.95;
+function rotateView2d(deltaY, deltaDown) {
+	cameraAngleDown = clamp(cameraAngleDown + deltaDown, 0, Math.PI/2);
+	rotateViewY(deltaY);
+}
+function clamp(x, lowerBound, upperBound) {
+	assert(lowerBound <= upperBound);
+	if (x < lowerBound) return lowerBound;
+	if (x > upperBound) return upperBound;
+	return x;
+}
 function rotateViewY(delta) {
 	const viewRadius = 9 / (fieldOfViewDegrees/180 * Math.PI);
 	cameraAngleY += delta;
@@ -184,8 +194,10 @@ function onMouseMove(event) {
 	if (isDragingView) {
 		// right click drag
 		const {movementX, movementY} = event;
+		const dragCameraScaleX = Math.PI / 400;
+		const dragCameraScaleY = Math.PI / 800;
 		// update mouse over object given the new camera position
-		rotateViewY(movementX);
+		rotateView2d(movementX * dragCameraScaleX, movementY * dragCameraScaleY);
 		updateMouseOverObject();
 	} else {
 		// normal movement
