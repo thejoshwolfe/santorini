@@ -1,13 +1,13 @@
 // Colors
-const WHITE = 0xFFFFFF;	
+const WHITE = 0xFFFFFF;
 const SKY_LIGHT_COLOR = 0xB1E1FF; 		// light blue
 const GROUND_LIGHT_COLOR = 0xB97A20;  	// brownish orange
 const PLAYER_1_COLOR = 0xADD8F3;		// sky blue
 const PLAYER_2_COLOR = 0xCBBAD2;		// lavendar
 const BUILDING_COLOR = 0xEEEEEE;		// white
-const CLIFF_COLOR = 0x916291;			
-const GRASS_COLOR = 0x387342;			
-const DOME_COLOR = 0x2090D5;			
+const CLIFF_COLOR = 0x916291;
+const GRASS_COLOR = 0x387342;
+const DOME_COLOR = 0x2090D5;
 
 // Materials
 const buildingMaterial = new THREE.MeshLambertMaterial({color: BUILDING_COLOR});
