@@ -174,8 +174,7 @@ function updateMouseOverObject() {
 			({x, y} = object.userData.boardPosition);
 		}
 		let height = boardState.getBuildingHeight(x, y);
-		if (height === 3) return null; // TODO: domes
-		// want to build one higher
+		// we interact with the space above the floor.
 		height += 1;
 		return {x, y, height};
 	})();
@@ -222,7 +221,7 @@ function onMouseDown(event) {
 		case 0: // left click
 			if (mouseBoardPosition == null) return;
 			const {x, y, height} = mouseBoardPosition;
-			createBuilding(x, y, height);
+			doActionAtPosition(x, y, height);
 			updateMouseOverObject();
 			return;
 		case 2: // right click
@@ -242,6 +241,16 @@ function onContextMenu(event) {
 	return false;
 }
 window.addEventListener("contextmenu", onContextMenu, false);
+
+
+// input state
+function doActionAtPosition(x, y, height) {
+	if (boardState.isOccupied(x, y)) return;
+	// build building
+	if (height > 3) return;
+	createBuilding(x, y, height);
+}
+
 
 // main loop
 function animate() {
