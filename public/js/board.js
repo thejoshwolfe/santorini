@@ -3,7 +3,7 @@ class BoardState {
 		// numbers from 0 - 3 representing the non-dome building height.
 		this.buildingHeights = [...Array(25)].map(() => 0);
 
-		// can contain: null, "dome", something about player cones too TBD.
+		// can contain: null, ["dome"], or ["pawn", player]
 		this.occupants = [...Array(25)].map(() => null);
 
 		// arrays of THREE objects from base up.
@@ -36,20 +36,45 @@ class BoardState {
 	placeDome(object) {
 		const {index} = this._assertBoardPosition(object);
 
-		this.occupants[index] = "dome";
+		this.occupants[index] = ["dome"];
 		this.objectStacks[index].push(object);
 	}
 
 	// same assumptions as placeDome.
-	placePawn(object) {
+	placePawn(object, player) {
 		const {index} = this._assertBoardPosition(object);
 
-		this.occupants[index] = "pawn";
+		this.occupants[index] = ["pawn", player];
 		this.objectStacks[index].push(object);
+	}
+	// returns the THREE object.
+	movePawn(fromX, fromY, fromHeight, toX, toY, toHeight) {
+		const fromIndex = this.coordToIndex(fromX, fromY);
+		const toIndex = this.coordToIndex(toX, toY);
+		const occupant = this.occupants[fromIndex];
+
+		// sanity checks.
+		assert(occupant != null);
+		assert(occupant[0] === "pawn");
+		assert(this.occupants[toIndex] == null);
+		assert(this.objectStacks[fromIndex].length === fromHeight);
+		assert(this.objectStacks[toIndex].length === toHeight - 1);
+
+		// move object
+		const cone = this.objectStacks[fromIndex].pop();
+		this.objectStacks[toIndex].push(cone);
+		// move occupant
+		delete this.occupants[fromIndex];
+		this.occupants[toIndex] = occupant;
+
+		return cone;
 	}
 
 	isOccupied(x, y) {
-		return this.occupants[this.coordToIndex(x, y)] != null;
+		return this.getOccupant(x, y) != null;
+	}
+	getOccupant(x, y) {
+		return this.occupants[this.coordToIndex(x, y)];
 	}
 
 	// converts x and y in the range [-2, 2] to an index from [0, 24].
