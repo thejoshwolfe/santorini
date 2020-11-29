@@ -62,26 +62,6 @@ function createBuilding(x, y, height) {
 	scene.add(block);
 }
 
-[
-	[0, 0, 3],
-	[1, 2, 2],
-	[-1, 0, 1],
-	[1, 0, 1],
-
-	[-1, -1, 1],
-	[0, -1, 2],
-	[1, -1, 3],
-	[-1, -2, 1],
-	[0, -2, 2],
-	[1, -2, 3],
-].forEach(([x, y, stackHeight]) => {
-	[0, 1, 2].forEach(i => {
-		const height = i + 1;
-		if (height > stackHeight) return;
-		createBuilding(x, y, height);
-	});
-});
-
 function createDome(x, y) {
 	const height = boardState.getBuildingHeight(x, y) + 1;
 	const dome = new THREE.Mesh(domeGeometry, domeMaterial);
@@ -91,15 +71,6 @@ function createDome(x, y) {
 	boardState.placeDome(dome);
 	scene.add(dome);
 }
-
-[
-	[-2, -1],
-	[-1, -1],
-	[0, -1],
-	[1, -1],
-].forEach(([x, y]) => {
-	createDome(x, y);
-});
 
 function createPawn(x, y, player) {
 	const material = playerToPawnMaterial[player];
@@ -241,11 +212,35 @@ function onContextMenu(event) {
 }
 window.addEventListener("contextmenu", onContextMenu, false);
 
+function onKeyDown(event) {
+	const modifiers = getModifiers(event);
+	if (modifiers !== 0) return;
+	switch (event.key) {
+		case "d":
+			inputState = {pendingDomeBuild: true};
+			break;
+		case "z":
+			inputState = {pendingUndo: true};
+			break;
+		case "Escape":
+			inputState = {};
+			break;
+		default:
+			return;
+	}
+	event.preventDefault();
+}
+window.addEventListener("keydown", onKeyDown, false);
 
 // input state
-let movingPawnBoardPosition = null; // {x, y, height};
+let inputState = {
+	movingPawnBoardPosition: null, // {x, y, height};
+	pendingDomeBuild: null, // or true
+	pendingUndo: null, // or true
+};
 function doActionAtPosition(x, y, height) {
 	const occupant = boardState.getOccupant(x, y);
+	const {movingPawnBoardPosition, pendingDomeBuild, pendingUndo} = inputState;
 	if (movingPawnBoardPosition != null) {
 		// pawn move in progress.
 
@@ -256,33 +251,49 @@ function doActionAtPosition(x, y, height) {
 				x, y, height);
 			cone.position.set(x, elevationLevels[height - 1] + coneHeight / 2, y);
 			cone.userData.boardPosition = {x, y, height};
-			movingPawnBoardPosition = null;
+			inputState = {};
 		} else if (occupant[0] === "dome") {
 			// pawns can never move into domes.
 		} else if (occupant[0] === "pawn") {
 			// moving a pawn onto a pawn
 			if (movingPawnBoardPosition.x === x && movingPawnBoardPosition.y === y) {
 				// moving a pawn to its own position means cancel movement.
-				movingPawnBoardPosition = null;
+				inputState = {};
 			} else {
 				// TODO: Minotaur/Apollo can move into opponents spaces.
 			}
 		} else assert(false);
+	} else if (pendingUndo) {
+		// unbuild
+
+		if (occupant == null) {
+			if (boardState.getBuildingHeight(x, y) > 0) {
+				const block = boardState.removeBuilding(x, y, height - 1);
+				scene.remove(block);
+			}
+		} else if (occupant[0] === "dome") {
+			const dome = boardState.removeDome(x, y, height - 1);
+			scene.remove(dome);
+		} else if (occupant[0] === "pawn") {
+			// This is not how you kill a pawn.
+		}
+		inputState = {};
 	} else {
-		// normal clicking
+		// build clicking
 
 		if (occupant == null) {
 			// build building
-			if (height <= 3) {
-				createBuilding(x, y, height);
-			} else if (height == 4) {
+			if (height === 4 || pendingDomeBuild) {
 				createDome(x, y);
+			} else {
+				createBuilding(x, y, height);
 			}
+			inputState = {};
 		} else if (occupant[0] === "dome") {
 			// can't interact with domes.
 		} else if (occupant[0] === "pawn") {
 			// start a pawn move.
-			movingPawnBoardPosition = {x, y, height};
+			inputState = {movingPawnBoardPosition: {x, y, height}};
 		} else assert(false);
 	}
 	updateMouseOverObject();

@@ -28,6 +28,14 @@ class BoardState {
 		this.buildingHeights[index] = height;
 		this.objectStacks[index].push(object);
 	}
+	// returns the THREE object.
+	removeBuilding(x, y, height) {
+		const index = this.coordToIndex(x, y);
+		assert(this.occupants[index] == null);
+		assert(this.buildingHeights[index] === height);
+		this.buildingHeights[index] -= 1;
+		return this.objectStacks[index].pop();
+	}
 
 	// object should be a THREE object with .userData.boardPosition: {x, y, height}.
 	// x and y should be in the range [-2, 2].
@@ -38,6 +46,16 @@ class BoardState {
 
 		this.occupants[index] = ["dome"];
 		this.objectStacks[index].push(object);
+	}
+	// returns the THREE object.
+	removeDome(x, y, height) {
+		const index = this.coordToIndex(x, y);
+		const occupant = this.occupants[index];
+		assert(occupant != null);
+		assert(occupant[0] === "dome");
+		assert(this.buildingHeights[index] === height);
+		this.occupants[index] = null;
+		return this.objectStacks[index].pop();
 	}
 
 	// same assumptions as placeDome.
@@ -64,7 +82,7 @@ class BoardState {
 		const cone = this.objectStacks[fromIndex].pop();
 		this.objectStacks[toIndex].push(cone);
 		// move occupant
-		delete this.occupants[fromIndex];
+		this.occupants[fromIndex] = null;
 		this.occupants[toIndex] = occupant;
 
 		return cone;
