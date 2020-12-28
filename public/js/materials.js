@@ -1,7 +1,3 @@
-// Players
-const PLAYER_BLUE   = "blue";
-const PLAYER_PURPLE = "purple";
-
 // Colors
 const WHITE = 0xFFFFFF;
 const SKY_LIGHT_COLOR = 0xB1E1FF;    // light blue

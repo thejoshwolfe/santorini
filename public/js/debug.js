@@ -1,5 +1,11 @@
-function assert(b) {
-	if (!b) throw new Error("assertion failed");
+function assert(b, msg) {
+	if (b) return;
+	if (msg == null) {
+		msg = "assertion failed";
+	} else {
+		msg = "assertion failed: " + msg;
+	}
+	throw new Error(msg);
 }
 
 let _debugOutput = {};

@@ -49,48 +49,69 @@ const blockGeometries = [0, 1, 2].map(i => {
 	return new THREE.BoxGeometry(blockSideLengths[i], blockHeights[i], blockSideLengths[i]);
 });
 
+// mapping from object handle -> THREE object.
+const threeObjects = {};
+
+function initThreeObject(object, x, y, z, handle) {
+	object.position.set(x, y, z);
+	object.userData.handle = handle;
+	object.layers.enable(INTERACT_LAYER);
+
+	threeObjects[handle] = object;
+	scene.add(object);
+}
+
 let boardState = new BoardState();
 
-function createBuilding(x, y, height) {
-	const i = height - 1;
+function refreshObject(handle) {
+	const existingObject = threeObjects[handle];
+	if (existingObject != null) {
+		scene.remove(existingObject);
+		delete threeObjects[handle];
+	}
 
-	const block = new THREE.Mesh(blockGeometries[i], buildingMaterial);
-	block.position.set(x, blockYPositions[i], y);
-	block.userData.boardPosition = {x, y, height};
-	block.layers.enable(INTERACT_LAYER);
-	boardState.placeBuilding(block);
-	scene.add(block);
+	const objectInfo = boardState.getObjectInfo(handle);
+	if (objectInfo == null) return;
+
+	const {objectType, x, y, height} = objectInfo;
+	if (objectType === OBJECT_TYPE_BUILDING) {
+		const i = height - 1;
+		initThreeObject(
+			new THREE.Mesh(blockGeometries[i], buildingMaterial),
+			x, blockYPositions[i], y,
+			handle);
+	} else if (objectType === OBJECT_TYPE_DOME) {
+		initThreeObject(
+			new THREE.Mesh(domeGeometry, domeMaterial),
+			x, elevationLevels[height - 1] + domeHeight - domeRadius, y,
+			handle);
+	} else if (objectTypeIsPawn(objectType)) {
+		const player = objectTypeToPawnPlayer(objectType);
+		initThreeObject(
+			new THREE.Mesh(coneGeometry, playerToPawnMaterial[player]),
+			x, elevationLevels[height - 1] + coneHeight / 2, y,
+			handle);
+	} else assert(false);
 }
 
-function createDome(x, y) {
-	const height = boardState.getBuildingHeight(x, y) + 1;
-	const dome = new THREE.Mesh(domeGeometry, domeMaterial);
-	dome.position.set(x, elevationLevels[height - 1] + domeHeight - domeRadius, y);
-	dome.userData.boardPosition = {x, y, height};
-	dome.layers.enable(INTERACT_LAYER);
-	boardState.placeDome(dome);
-	scene.add(dome);
+function buildBuilding(x, y) {
+	const handle = boardState.buildBuilding(x, y);
+	refreshObject(handle);
 }
 
-function createPawn(x, y, player) {
-	const material = playerToPawnMaterial[player];
-	const cone = new THREE.Mesh(coneGeometry, material);
-	const height = boardState.getBuildingHeight(x, y) + 1;
-	cone.position.set(x, elevationLevels[height - 1] + coneHeight / 2, y);
-	cone.userData.boardPosition = {x, y, height};
-	cone.layers.enable(INTERACT_LAYER);
-	boardState.placePawn(cone, player);
-	scene.add(cone);
+function buildDome(x, y) {
+	const handle = boardState.buildDome(x, y);
+	refreshObject(handle);
 }
 
-[
-	[-2, -2, PLAYER_BLUE],
-	[-1, -2, PLAYER_BLUE],
-	[0, -2, PLAYER_PURPLE],
-	[1, -2, PLAYER_PURPLE],
-].forEach(([x, y, player]) => {
-	createPawn(x, y, player);
-});
+function createPawn(x, y, objectType) {
+	const handle = boardState.createPawn(x, y, objectType);
+	refreshObject(handle);
+}
+createPawn(-2, -2, OBJECT_TYPE_PAWN_BLUE_F);
+createPawn(-1, -2, OBJECT_TYPE_PAWN_BLUE_M);
+createPawn(0, -2, OBJECT_TYPE_PAWN_PURPLE_F);
+createPawn(1, -2, OBJECT_TYPE_PAWN_PURPLE_M);
 
 addLighting(scene);
 
@@ -123,10 +144,10 @@ rotateViewY(Math.PI/4);
 // mouse support
 // each coord in the range (-1, +1).
 const mousePosition = new THREE.Vector2();
-let mouseBoardPosition = null; // {x, y, height};
+let mouseOverPosition = null; // {x, y};
 
-function updateMouseOverObject() {
-	mouseBoardPosition = (() => {
+function updateMouseOverPosition() {
+	mouseOverPosition = (() => {
 		const raycaster = new THREE.Raycaster();
 		raycaster.setFromCamera(mousePosition, camera);
 		raycaster.layers.set(INTERACT_LAYER);
@@ -142,12 +163,9 @@ function updateMouseOverObject() {
 			x = Math.floor(point.x + 0.5);
 			y = Math.floor(point.z + 0.5);
 		} else {
-			({x, y} = object.userData.boardPosition);
+			({x, y} = boardState.getObjectInfo(object.userData.handle));
 		}
-		let height = boardState.getBuildingHeight(x, y);
-		// we interact with the space above the floor.
-		height += 1;
-		return {x, y, height};
+		return {x, y};
 	})();
 }
 function onMouseMove(event) {
@@ -161,10 +179,10 @@ function onMouseMove(event) {
 		const dragCameraScaleY = Math.PI / window.innerHeight;
 		// update mouse over object given the new camera position
 		rotateView2d(movementX * dragCameraScaleX, movementY * dragCameraScaleY);
-		updateMouseOverObject();
+		updateMouseOverPosition();
 	} else {
 		// normal movement
-		updateMouseOverObject();
+		updateMouseOverPosition();
 	}
 }
 window.addEventListener("mousemove", onMouseMove, false);
@@ -190,9 +208,9 @@ function onMouseDown(event) {
 	event.preventDefault();
 	switch (event.button) {
 		case 0: // left click
-			if (mouseBoardPosition == null) return;
-			const {x, y, height} = mouseBoardPosition;
-			doActionAtPosition(x, y, height);
+			if (mouseOverPosition == null) return;
+			const {x, y} = mouseOverPosition;
+			doActionAtPosition(x, y);
 			return;
 		case 2: // right click
 			isDragingView = true;
@@ -234,27 +252,30 @@ window.addEventListener("keydown", onKeyDown, false);
 
 // input state
 let inputState = {
-	//movingPawnBoardPosition: {x, y, height},
+	//movingPawnBoardPosition: {x, y},
 	//pendingDomeBuild: true,
 	//pendingUndo: true,
 };
-function doActionAtPosition(x, y, height) {
-	const occupant = boardState.getOccupant(x, y);
+function doActionAtPosition(x, y) {
+	const {buildingHeight, occupantHandle} = boardState.getBuildingTop(x, y);
+	let occupantObjectType = null;
+	if (occupantHandle != null) {
+		occupantObjectType = boardState.getObjectInfo(occupantHandle).objectType;
+	}
 	const {movingPawnBoardPosition, pendingDomeBuild, pendingUndo} = inputState;
 	if (movingPawnBoardPosition != null) {
 		// pawn move in progress.
 
-		if (occupant == null) {
+		if (occupantHandle == null) {
 			// move pawn into empty space.
-			const cone = boardState.movePawn(
-				movingPawnBoardPosition.x, movingPawnBoardPosition.y, movingPawnBoardPosition.height,
-				x, y, height);
-			cone.position.set(x, elevationLevels[height - 1] + coneHeight / 2, y);
-			cone.userData.boardPosition = {x, y, height};
+			const handle = boardState.movePawn(
+				movingPawnBoardPosition.x, movingPawnBoardPosition.y,
+				x, y);
+			refreshObject(handle);
 			inputState = {};
-		} else if (occupant[0] === "dome") {
+		} else if (occupantObjectType === OBJECT_TYPE_DOME) {
 			// pawns can never move into domes.
-		} else if (occupant[0] === "pawn") {
+		} else if (objectTypeIsPawn(occupantObjectType)) {
 			// moving a pawn onto a pawn
 			if (movingPawnBoardPosition.x === x && movingPawnBoardPosition.y === y) {
 				// moving a pawn to its own position means cancel movement.
@@ -266,37 +287,38 @@ function doActionAtPosition(x, y, height) {
 	} else if (pendingUndo) {
 		// unbuild
 
-		if (occupant == null) {
-			if (boardState.getBuildingHeight(x, y) > 0) {
-				const block = boardState.removeBuilding(x, y, height - 1);
-				scene.remove(block);
+		if (occupantHandle == null) {
+			if (buildingHeight > 0) {
+				const handle = boardState.removeBuilding(x, y);
+				refreshObject(handle);
 			}
-		} else if (occupant[0] === "dome") {
-			const dome = boardState.removeDome(x, y, height - 1);
-			scene.remove(dome);
-		} else if (occupant[0] === "pawn") {
+		} else if (occupantObjectType === OBJECT_TYPE_DOME) {
+			const handle = boardState.removeDome(x, y);
+			refreshObject(handle);
+		} else if (objectTypeIsPawn(occupantObjectType)) {
 			// This is not how you kill a pawn.
-		}
+		} else assert(false);
 		inputState = {};
 	} else {
 		// build clicking
 
-		if (occupant == null) {
+		if (occupantHandle == null) {
 			// build building
+			const height = buildingHeight + 1;
 			if (height === 4 || pendingDomeBuild) {
-				createDome(x, y);
+				buildDome(x, y);
 			} else {
-				createBuilding(x, y, height);
+				buildBuilding(x, y);
 			}
 			inputState = {};
-		} else if (occupant[0] === "dome") {
+		} else if (occupantObjectType === OBJECT_TYPE_DOME) {
 			// can't interact with domes.
-		} else if (occupant[0] === "pawn") {
+		} else if (objectTypeIsPawn(occupantObjectType)) {
 			// start a pawn move.
-			inputState = {movingPawnBoardPosition: {x, y, height}};
+			inputState = {movingPawnBoardPosition: {x, y}};
 		} else assert(false);
 	}
-	updateMouseOverObject();
+	updateMouseOverPosition();
 }
 
 
@@ -308,7 +330,7 @@ function animate() {
 	renderer.render(scene, camera);
 
 	// debug stuff
-	setDebugOutput("mouse", mouseBoardPosition);
+	setDebugOutput("mouse", mouseOverPosition);
 	setDebugOutput("input", inputState);
 }
 
