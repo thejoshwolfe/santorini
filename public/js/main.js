@@ -234,9 +234,9 @@ window.addEventListener("keydown", onKeyDown, false);
 
 // input state
 let inputState = {
-	movingPawnBoardPosition: null, // {x, y, height};
-	pendingDomeBuild: null, // or true
-	pendingUndo: null, // or true
+	//movingPawnBoardPosition: {x, y, height},
+	//pendingDomeBuild: true,
+	//pendingUndo: true,
 };
 function doActionAtPosition(x, y, height) {
 	const occupant = boardState.getOccupant(x, y);
@@ -306,6 +306,10 @@ function animate() {
 
 	// render
 	renderer.render(scene, camera);
+
+	// debug stuff
+	setDebugOutput("mouse", mouseBoardPosition);
+	setDebugOutput("input", inputState);
 }
 
 // begin

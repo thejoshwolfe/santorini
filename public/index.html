@@ -6,11 +6,19 @@
 		<style>
 			body { margin: 0; }
 			canvas { display: block; }
+
+			.ui_overlay {
+				position: fixed;
+				z-index: 99;
+				color: white;
+				font-family: monospace;
+			}
 		</style>
 	</head>
 	<body>
+    <div id="debug_div" class="ui_overlay"></div>
 		<script src="js/three.js"></script>
-		<script src="js/assert.js"></script>
+		<script src="js/debug.js"></script>
 		<script src="js/board.js"></script>
 		<script src="js/materials.js"></script>
 		<script src="js/lighting.js"></script>
