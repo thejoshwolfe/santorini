@@ -21,10 +21,12 @@ function removeDome(x, y) {
 
 function createPawn(x, y, objectType) {
 	_refreshObject(boardState.createPawn(x, y, objectType));
-	// TODO: first-class pawn creation. for now, this is hard coded, so don't sync it.
-	//sendObj({command: "createPawn", x, y, objectType});
+	sendObj({command: "createPawn", x, y, objectType});
 }
-
+function killPawn(x, y) {
+	_refreshObject(boardState.killPawn(x, y));
+	sendObj({command: "killPawn", x, y});
+}
 function movePawn(fromX, fromY, toX, toY) {
 	_refreshObject(boardState.movePawn(fromX, fromY, toX, toY));
 	sendObj({command: "movePawn", fromX, fromY, toX, toY});
@@ -48,17 +50,14 @@ function receiveObj(obj) {
 			return _refreshObject(boardState.removeDome(obj.x, obj.y));
 		case "createPawn":
 			return _refreshObject(boardState.createPawn(obj.x, obj.y, obj.objectType));
+		case "killPawn":
+			return _refreshObject(boardState.killPawn(obj.x, obj.y));
 		case "movePawn":
 			return _refreshObject(boardState.movePawn(obj.fromX, obj.fromY, obj.toX, obj.toY));
 	}
 
 	console.log("unrecognized command:", obj);
 }
-
-createPawn(-2, -2, OBJECT_TYPE_PAWN_BLUE_F);
-createPawn(-1, -2, OBJECT_TYPE_PAWN_BLUE_M);
-createPawn(0, -2, OBJECT_TYPE_PAWN_PURPLE_F);
-createPawn(1, -2, OBJECT_TYPE_PAWN_PURPLE_M);
 
 // mouse support
 // each coord in the range (-1, +1).
@@ -159,6 +158,21 @@ function onKeyDown(event) {
 		case "z":
 			inputState = {pendingUndo: true};
 			break;
+		case "k":
+			inputState = {pendingKill: true};
+			break;
+		case "1":
+			inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_F};
+			break;
+		case "2":
+			inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_M};
+			break;
+		case "3":
+			inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_F};
+			break;
+		case "4":
+			inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_M};
+			break;
 		case "Escape":
 			inputState = {};
 			break;
@@ -171,9 +185,11 @@ window.addEventListener("keydown", onKeyDown, false);
 
 // input state
 let inputState = {
-	//movingPawnBoardPosition: {x, y},
+	//movingPawnPosition: {x, y},
 	//pendingDomeBuild: true,
 	//pendingUndo: true,
+	//pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_F,
+	//pendingKill: true,
 };
 function doActionAtPosition(x, y) {
 	if (!isConnected()) return; // please hold
@@ -183,30 +199,36 @@ function doActionAtPosition(x, y) {
 	if (occupantHandle != null) {
 		occupantObjectType = boardState.getObjectInfo(occupantHandle).objectType;
 	}
-	const {movingPawnBoardPosition, pendingDomeBuild, pendingUndo} = inputState;
-	if (movingPawnBoardPosition != null) {
-		// pawn move in progress.
+	const {
+		movingPawnPosition,
+		pendingDomeBuild,
+		pendingUndo,
+		pendingPawnCreation,
+		pendingKill,
+	} = inputState;
 
+	if (movingPawnPosition != null) {
+		// pawn move in progress.
 		if (occupantHandle == null) {
 			// move pawn into empty space.
 			movePawn(
-				movingPawnBoardPosition.x, movingPawnBoardPosition.y,
+				movingPawnPosition.x, movingPawnPosition.y,
 				x, y);
 			inputState = {};
 		} else if (occupantObjectType === OBJECT_TYPE_DOME) {
 			// pawns can never move into domes.
 		} else if (objectTypeIsPawn(occupantObjectType)) {
 			// moving a pawn onto a pawn
-			if (movingPawnBoardPosition.x === x && movingPawnBoardPosition.y === y) {
+			if (movingPawnPosition.x === x && movingPawnPosition.y === y) {
 				// moving a pawn to its own position means cancel movement.
 				inputState = {};
 			} else {
 				// TODO: Minotaur/Apollo can move into opponents spaces.
 			}
 		} else assert(false);
+
 	} else if (pendingUndo) {
 		// unbuild
-
 		if (occupantHandle == null) {
 			if (buildingHeight > 0) {
 				removeBuilding(x, y);
@@ -217,25 +239,38 @@ function doActionAtPosition(x, y) {
 			// This is not how you kill a pawn.
 		} else assert(false);
 		inputState = {};
+
+	} else if (pendingKill) {
+		// kill
+		if (objectTypeIsPawn(occupantObjectType)) {
+			killPawn(x, y);
+			inputState = {};
+		}
+
 	} else {
 		// build clicking
-
 		if (occupantHandle == null) {
-			// build building
-			const height = buildingHeight + 1;
-			if (height === 4 || pendingDomeBuild) {
-				buildDome(x, y);
+			if (pendingPawnCreation != null) {
+				// create pawn
+				createPawn(x, y, pendingPawnCreation);
 			} else {
-				buildBuilding(x, y);
+				// build building
+				const height = buildingHeight + 1;
+				if (height === 4 || pendingDomeBuild) {
+					buildDome(x, y);
+				} else {
+					buildBuilding(x, y);
+				}
 			}
 			inputState = {};
 		} else if (occupantObjectType === OBJECT_TYPE_DOME) {
 			// can't interact with domes.
 		} else if (objectTypeIsPawn(occupantObjectType)) {
 			// start a pawn move.
-			inputState = {movingPawnBoardPosition: {x, y}};
+			inputState = {movingPawnPosition: {x, y}};
 		} else assert(false);
 	}
+
 	updateMouseOverPosition();
 }
 

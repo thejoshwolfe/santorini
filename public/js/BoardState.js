@@ -74,6 +74,16 @@ class BoardState {
 		});
 	}
 	// returns the object handle
+	killPawn(x, y, height) {
+		const stack = this.objectStacks[this._coordToIndex(x, y)];
+		assert(stack.length > 0, "removing from empty stack");
+		const handle = stack.pop();
+		const {objectType} = this.objects[handle];
+		assert(objectTypeIsPawn(objectType), "expected pawn");
+		delete this.objects[handle];
+		return handle;
+	}
+	// returns the object handle
 	movePawn(fromX, fromY, toX, toY) {
 		const fromIndex = this._coordToIndex(fromX, fromY);
 		const toIndex = this._coordToIndex(toX, toY);
