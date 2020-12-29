@@ -1,24 +1,60 @@
 let boardState = new BoardState();
 
-function refreshObject(handle) {
+// State changes
+function buildBuilding(x, y) {
+	_refreshObject(boardState.buildBuilding(x, y));
+	sendObj({command: "buildBuilding", x, y});
+}
+function removeBuilding(x, y) {
+	_refreshObject(boardState.removeBuilding(x, y));
+	sendObj({command: "removeBuilding", x, y});
+}
+
+function buildDome(x, y) {
+	_refreshObject(boardState.buildDome(x, y));
+	sendObj({command: "buildDome", x, y});
+}
+function removeDome(x, y) {
+	_refreshObject(boardState.removeDome(x, y));
+	sendObj({command: "removeDome", x, y});
+}
+
+function createPawn(x, y, objectType) {
+	_refreshObject(boardState.createPawn(x, y, objectType));
+	// TODO: first-class pawn creation. for now, this is hard coded, so don't sync it.
+	//sendObj({command: "createPawn", x, y, objectType});
+}
+
+function movePawn(fromX, fromY, toX, toY) {
+	_refreshObject(boardState.movePawn(fromX, fromY, toX, toY));
+	sendObj({command: "movePawn", fromX, fromY, toX, toY});
+}
+
+function _refreshObject(handle) {
 	const objectInfo = boardState.getObjectInfo(handle);
 	refreshGraphics(handle, objectInfo);
 }
 
-function buildBuilding(x, y) {
-	const handle = boardState.buildBuilding(x, y);
-	refreshObject(handle);
+function receiveObj(obj) {
+	switch (obj.command) {
+		case "welcome": return;
+		case "buildBuilding":
+			return _refreshObject(boardState.buildBuilding(obj.x, obj.y));
+		case "removeBuilding":
+			return _refreshObject(boardState.removeBuilding(obj.x, obj.y));
+		case "buildDome":
+			return _refreshObject(boardState.buildDome(obj.x, obj.y));
+		case "removeDome":
+			return _refreshObject(boardState.removeDome(obj.x, obj.y));
+		case "createPawn":
+			return _refreshObject(boardState.createPawn(obj.x, obj.y, obj.objectType));
+		case "movePawn":
+			return _refreshObject(boardState.movePawn(obj.fromX, obj.fromY, obj.toX, obj.toY));
+	}
+
+	console.log("unrecognized command:", obj);
 }
 
-function buildDome(x, y) {
-	const handle = boardState.buildDome(x, y);
-	refreshObject(handle);
-}
-
-function createPawn(x, y, objectType) {
-	const handle = boardState.createPawn(x, y, objectType);
-	refreshObject(handle);
-}
 createPawn(-2, -2, OBJECT_TYPE_PAWN_BLUE_F);
 createPawn(-1, -2, OBJECT_TYPE_PAWN_BLUE_M);
 createPawn(0, -2, OBJECT_TYPE_PAWN_PURPLE_F);
@@ -140,6 +176,8 @@ let inputState = {
 	//pendingUndo: true,
 };
 function doActionAtPosition(x, y) {
+	if (!isConnected()) return; // please hold
+
 	const {buildingHeight, occupantHandle} = boardState.getBuildingTop(x, y);
 	let occupantObjectType = null;
 	if (occupantHandle != null) {
@@ -151,10 +189,9 @@ function doActionAtPosition(x, y) {
 
 		if (occupantHandle == null) {
 			// move pawn into empty space.
-			const handle = boardState.movePawn(
+			movePawn(
 				movingPawnBoardPosition.x, movingPawnBoardPosition.y,
 				x, y);
-			refreshObject(handle);
 			inputState = {};
 		} else if (occupantObjectType === OBJECT_TYPE_DOME) {
 			// pawns can never move into domes.
@@ -172,12 +209,10 @@ function doActionAtPosition(x, y) {
 
 		if (occupantHandle == null) {
 			if (buildingHeight > 0) {
-				const handle = boardState.removeBuilding(x, y);
-				refreshObject(handle);
+				removeBuilding(x, y);
 			}
 		} else if (occupantObjectType === OBJECT_TYPE_DOME) {
-			const handle = boardState.removeDome(x, y);
-			refreshObject(handle);
+			removeDome(x, y);
 		} else if (objectTypeIsPawn(occupantObjectType)) {
 			// This is not how you kill a pawn.
 		} else assert(false);
@@ -217,14 +252,10 @@ function animate() {
 
 // web socket api
 function onWebSocketOpen() {
-	setTimeout(doSomethingOrWhatever, 3000);
-	function doSomethingOrWhatever() {
-		if (!isConnected()) return;
-		sendObj({"command": "ping"});
-	}
+	console.log("socket open");
 }
 function onWebSocketObj(obj) {
-	console.log("got message", obj);
+	receiveObj(obj);
 }
 
 

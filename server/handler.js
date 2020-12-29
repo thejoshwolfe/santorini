@@ -46,7 +46,7 @@ exports.handleConnection = function handleConnection(ws) {
 		delete connectedSockets[clientId];
 	}
 
-	connectedSockets[clientId].sendObj({"command": "welcome"});
+	connectedSockets[clientId].sendObj({command: "welcome"});
 };
 
 // mapping from clientId -> {sendObj(), ...}
