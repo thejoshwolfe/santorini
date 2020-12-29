@@ -1,4 +1,5 @@
 let boardState = new BoardState();
+let role = null;
 
 // State changes
 function buildBuilding(x, y) {
@@ -60,6 +61,7 @@ function receiveObj(obj) {
 		case "welcome":
 			boardState = new BoardState(obj.state);
 			_refreshAllObjects(Object.keys(obj.state));
+			role = obj.role;
 			return;
 		case "buildBuilding":
 			return _refreshObject(boardState.buildBuilding(obj.x, obj.y));
@@ -305,6 +307,7 @@ function animate() {
 	setDebugOutput("mouse", mouseOverPosition);
 	setDebugOutput("input", inputState);
 	setDebugOutput("connected", isConnected());
+	setDebugOutput("role", role);
 }
 
 // web socket api

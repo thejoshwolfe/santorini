@@ -1,6 +1,7 @@
 // Players
 const PLAYER_BLUE   = "blue";
 const PLAYER_PURPLE = "purple";
+const PLAYER_SPECTATOR = "spectator";
 
 // Object types
 const OBJECT_TYPE_BUILDING = "building";
