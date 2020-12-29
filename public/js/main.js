@@ -62,7 +62,9 @@ function receiveObj(obj) {
 			boardState = new BoardState(obj.state);
 			_refreshAllObjects(Object.keys(obj.state));
 			role = obj.role;
+			whoseTurn = obj.whoseTurn;
 			return;
+
 		case "buildBuilding":
 			return _refreshObject(boardState.buildBuilding(obj.x, obj.y));
 		case "removeBuilding":
@@ -77,9 +79,24 @@ function receiveObj(obj) {
 			return _refreshObject(boardState.killPawn(obj.x, obj.y));
 		case "movePawn":
 			return _refreshObject(boardState.movePawn(obj.fromX, obj.fromY, obj.toX, obj.toY));
+
+		case "turnEnded":
+			whoseTurn = obj.whoseTurn;
+			return;
 	}
 
 	console.log("unrecognized command:", obj);
+}
+
+let whoseTurn = null;
+function isMyTurn() {
+	return isConnected() && whoseTurn === role;
+}
+function endTurn() {
+	if (!isMyTurn()) return;
+	// expect that it isn't our turn anymore.
+	whoseTurn = null;
+	sendObj({command: "endTurn"});
 }
 
 // mouse support
@@ -184,6 +201,9 @@ function onKeyDown(event) {
 		case "k":
 			inputState = {pendingKill: true};
 			break;
+		case "e":
+			endTurn();
+			break;
 		case "1":
 			inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_F};
 			break;
@@ -231,6 +251,9 @@ window.document.getElementById("undo_button").addEventListener("click", function
 window.document.getElementById("kill_pawn_button").addEventListener("click", function() {
 	inputState = {pendingKill: true};
 });
+window.document.getElementById("end_turn_button").addEventListener("click", function() {
+	endTurn();
+});
 
 // input state
 let inputState = {
@@ -241,7 +264,7 @@ let inputState = {
 	//pendingKill: true,
 };
 function doActionAtPosition(x, y) {
-	if (!isConnected()) return; // please hold
+	if (!isMyTurn()) return; // please hold
 
 	const {buildingHeight, occupantHandle} = boardState.getBuildingTop(x, y);
 	let occupantObjectType = null;
@@ -334,6 +357,7 @@ function animate() {
 	setDebugOutput("input", inputState);
 	setDebugOutput("connected", isConnected());
 	setDebugOutput("role", role);
+	setDebugOutput("whoseTurn", whoseTurn);
 }
 
 // web socket api

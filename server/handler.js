@@ -57,6 +57,7 @@ exports.handleConnection = function handleConnection(ws) {
 	connectedSockets[clientId].sendObj({
 		command: "welcome",
 		role,
+		whoseTurn,
 		state: boardState,
 	});
 };
@@ -66,8 +67,14 @@ const connectedSockets = {};
 
 // TODO: persist this database
 const boardState = {};
+let whoseTurn = PLAYER_BLUE;
 
 function handleRequest(clientId, obj) {
+	if (connectedSockets[clientId].role !== whoseTurn) {
+		// No.
+		return;
+	}
+
 	// update database
 	if (obj.diff != null) {
 		for (let handle in obj.diff) {
@@ -81,7 +88,15 @@ function handleRequest(clientId, obj) {
 		delete obj.diff;
 	}
 
-	broadcastObj(clientId, obj);
+	switch (obj.command) {
+		case "endTurn":
+			whoseTurn = whoseTurn === PLAYER_BLUE ? PLAYER_PURPLE : PLAYER_BLUE;
+			broadcastObj(null, {command: "turnEnded", whoseTurn});
+			break;
+		default:
+			broadcastObj(clientId, obj);
+			break;
+	}
 }
 
 function broadcastObj(originatorClientId, obj) {
