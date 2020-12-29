@@ -206,6 +206,32 @@ function onKeyDown(event) {
 }
 window.addEventListener("keydown", onKeyDown, false);
 
+// Buttons
+window.document.getElementById("cancel_button").addEventListener("click", function() {
+	inputState = {};
+});
+window.document.getElementById("create_pawn_blue_f_button").addEventListener("click", function() {
+	inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_F};
+});
+window.document.getElementById("create_pawn_blue_m_button").addEventListener("click", function() {
+	inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_M};
+});
+window.document.getElementById("create_pawn_purple_f_button").addEventListener("click", function() {
+	inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_F};
+});
+window.document.getElementById("create_pawn_purple_m_button").addEventListener("click", function() {
+	inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_M};
+});
+window.document.getElementById("build_dome_button").addEventListener("click", function() {
+	inputState = {pendingDomeBuild: true};
+});
+window.document.getElementById("undo_button").addEventListener("click", function() {
+	inputState = {pendingUndo: true};
+});
+window.document.getElementById("kill_pawn_button").addEventListener("click", function() {
+	inputState = {pendingKill: true};
+});
+
 // input state
 let inputState = {
 	//movingPawnPosition: {x, y},

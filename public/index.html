@@ -13,10 +13,31 @@
 				color: white;
 				font-family: monospace;
 			}
+
+			.right_aligned {
+				right: 0;
+				text-align: right;
+			}
+
+			.button_tray {
+				padding: 10px;
+			}
 		</style>
 	</head>
 	<body>
     <div id="debug_div" class="ui_overlay"></div>
+    <div id="buttons_div" class="ui_overlay right_aligned">
+			<div class="button_tray">
+				<button id="cancel_button" title="hotkey: Escape">Cancel</button>
+				<button id="create_pawn_blue_f_button" title="hotkey: 1">Blue F</button>
+				<button id="create_pawn_blue_m_button" title="hotkey: 2">Blue M</button>
+				<button id="create_pawn_purple_f_button" title="hotkey: 3">Purple F</button>
+				<button id="create_pawn_purple_m_button" title="hotkey: 4">Purple M</button>
+				<button id="build_dome_button" title="hotkey: D">Dome</button>
+				<button id="undo_button" title="hotkey: Z">Undo</button>
+				<button id="kill_pawn_button" title="hotkey: K">Kill</button>
+			</div>
+		</div>
 		<script src="vendor/three.js"></script>
 		<script src="js/debug.js"></script>
 		<script src="js/util.js"></script>
