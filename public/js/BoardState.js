@@ -139,12 +139,3 @@ class BoardState {
 		return (y + 2) * 5 + (x + 2);
 	}
 }
-
-function generateId() {
-	let id = "";
-	const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-	for (let i = 0; i < 8; i++) {
-		id += alphabet[Math.floor(Math.random() * alphabet.length)];
-	}
-	return id;
-}

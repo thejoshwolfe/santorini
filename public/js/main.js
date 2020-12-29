@@ -1,97 +1,8 @@
-const scene = new THREE.Scene();
-const fieldOfViewDegrees = 40;
-const camera = new THREE.PerspectiveCamera(fieldOfViewDegrees, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// layer allocations
-const RENDER_LAYER = 0; // enabled by default
-const INTERACT_LAYER = 1;
-
-// ground
-const theGround = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), cliffMaterial);
-theGround.position.set(0, -0.50, 0);
-theGround.layers.enable(INTERACT_LAYER);
-scene.add(theGround);
-
-const boardPlane = new THREE.PlaneGeometry(5, 5);
-boardPlane.rotateX(-Math.PI / 2);
-const grassField = new THREE.Mesh(boardPlane, grassMaterial);
-grassField.position.set(0, 0, 0);
-scene.add(grassField);
-
-
-// cubes
-const blockSideLengths = [
-	0.9, // base
-	0.8, // mid
-	0.7, // top
-];
-const blockHeights = [
-	0.6,  // base
-	0.55, // mid
-	0.5,  // top
-];
-const elevationLevels = [
-	0,
-	blockHeights[0],
-	blockHeights[0] + blockHeights[1],
-	blockHeights[0] + blockHeights[1] + blockHeights[2],
-];
-const blockYPositions = [
-	elevationLevels[0] + blockHeights[0] / 2,
-	elevationLevels[1] + blockHeights[1] / 2,
-	elevationLevels[2] + blockHeights[2] / 2,
-];
-const blockGeometries = [0, 1, 2].map(i => {
-	return new THREE.BoxGeometry(blockSideLengths[i], blockHeights[i], blockSideLengths[i]);
-});
-
-// mapping from object handle -> THREE object.
-const threeObjects = {};
-
-function initThreeObject(object, x, y, z, handle) {
-	object.position.set(x, y, z);
-	object.userData.handle = handle;
-	object.layers.enable(INTERACT_LAYER);
-
-	threeObjects[handle] = object;
-	scene.add(object);
-}
-
 let boardState = new BoardState();
 
 function refreshObject(handle) {
-	const existingObject = threeObjects[handle];
-	if (existingObject != null) {
-		scene.remove(existingObject);
-		delete threeObjects[handle];
-	}
-
 	const objectInfo = boardState.getObjectInfo(handle);
-	if (objectInfo == null) return;
-
-	const {objectType, x, y, height} = objectInfo;
-	if (objectType === OBJECT_TYPE_BUILDING) {
-		const i = height - 1;
-		initThreeObject(
-			new THREE.Mesh(blockGeometries[i], buildingMaterial),
-			x, blockYPositions[i], y,
-			handle);
-	} else if (objectType === OBJECT_TYPE_DOME) {
-		initThreeObject(
-			new THREE.Mesh(domeGeometry, domeMaterial),
-			x, elevationLevels[height - 1] + domeHeight - domeRadius, y,
-			handle);
-	} else if (objectTypeIsPawn(objectType)) {
-		const player = objectTypeToPawnPlayer(objectType);
-		initThreeObject(
-			new THREE.Mesh(coneGeometry, playerToPawnMaterial[player]),
-			x, elevationLevels[height - 1] + coneHeight / 2, y,
-			handle);
-	} else assert(false);
+	refreshGraphics(handle, objectInfo);
 }
 
 function buildBuilding(x, y) {
@@ -112,34 +23,6 @@ createPawn(-2, -2, OBJECT_TYPE_PAWN_BLUE_F);
 createPawn(-1, -2, OBJECT_TYPE_PAWN_BLUE_M);
 createPawn(0, -2, OBJECT_TYPE_PAWN_PURPLE_F);
 createPawn(1, -2, OBJECT_TYPE_PAWN_PURPLE_M);
-
-addLighting(scene);
-
-// camera
-let cameraAngleY = 0;
-let cameraAngleDown = 0.95;
-function rotateView2d(deltaY, deltaDown) {
-	cameraAngleDown = clamp(cameraAngleDown + deltaDown, 0, Math.PI/2);
-	rotateViewY(deltaY);
-}
-function clamp(x, lowerBound, upperBound) {
-	assert(lowerBound <= upperBound);
-	if (x < lowerBound) return lowerBound;
-	if (x > upperBound) return upperBound;
-	return x;
-}
-function rotateViewY(delta) {
-	const viewRadius = 9 / (fieldOfViewDegrees/180 * Math.PI);
-	cameraAngleY += delta;
-	camera.position.set(
-		viewRadius * Math.cos(cameraAngleY) * Math.cos(cameraAngleDown),
-		viewRadius * Math.sin(cameraAngleDown),
-		viewRadius * Math.sin(cameraAngleY) * Math.cos(cameraAngleDown));
-	camera.lookAt(0, 0, 0);
-}
-// initialize camera position
-rotateViewY(Math.PI/4);
-
 
 // mouse support
 // each coord in the range (-1, +1).
@@ -332,6 +215,7 @@ function animate() {
 	setDebugOutput("input", inputState);
 }
 
+// web socket api
 function onWebSocketOpen() {
 	setTimeout(doSomethingOrWhatever, 3000);
 	function doSomethingOrWhatever() {
