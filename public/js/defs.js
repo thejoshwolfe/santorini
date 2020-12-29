@@ -29,3 +29,27 @@ function objectTypeToPawnPlayer(objectType) {
 	}
 	assert(false);
 }
+
+function isValidObjectType(objectType) {
+	if (typeof objectType !== "string") return false;
+	switch (objectType) {
+		case OBJECT_TYPE_BUILDING:
+		case OBJECT_TYPE_DOME:
+		case OBJECT_TYPE_PAWN_BLUE_F:
+		case OBJECT_TYPE_PAWN_BLUE_M:
+		case OBJECT_TYPE_PAWN_PURPLE_F:
+		case OBJECT_TYPE_PAWN_PURPLE_M:
+			return true;
+	}
+	return false;
+}
+
+function isValidCoordinates(x, y, height) {
+	if (!Number.isInteger(x)) return false;
+	if (!Number.isInteger(y)) return false;
+	if (!Number.isInteger(height)) return false;
+	if (!(-2 <= x && x <= 2)) return false;
+	if (!(-2 <= y && y <= 2)) return false;
+	if (!(0 <= height && height <= 4)) return false;
+	return true;
+}

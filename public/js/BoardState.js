@@ -1,16 +1,45 @@
 class BoardState {
-	constructor() {
-		// arrays object handles. see this.objects.
-		this.objectStacks = [...Array(25)].map(() => []);
-
+	constructor(existingState = {}) {
 		// Mapping of object handle -> object info.
 		this.objects = {
 			// "abc123": {objectType: OBJECT_TYPE_BUILDING, x: 0, y: 0, height: 1},
 		};
+
+		// stacks of object handles cached by location.
+		this.objectStacks = [...Array(25)].map(() => []);
+
+		// Load existing objects
+		for (let handle in existingState) {
+			this.objects[handle] = existingState[handle];
+			const {objectType, x, y, height} = this.objects[handle];
+			assert(isValidObjectType(objectType));
+			assert(isValidCoordinates(x, y, height));
+			const stack = this.objectStacks[this._coordToIndex(x, y)];
+			const i = height - 1;
+			assert(stack[i] == null);
+			stack[i] = handle;
+		}
+
+		// sanity check the state is coherent
+		for (let stack of this.objectStacks) {
+			let foundOccupant = false;
+			for (let i = 0; i < stack.length; i++) {
+				assert(stack[i] != null);
+				const {objectType, x, y, height} = this.objects[stack[i]];
+				if (objectType !== OBJECT_TYPE_BUILDING) {
+					// occupant
+					assert(!foundOccupant);
+					foundOccupant = true;
+				}
+			}
+		}
 	}
 
+	// returns {objectType, x, y, height} or null.
 	getObjectInfo(handle) {
-		return this.objects[handle];
+		if (handle in this.objects) return this.objects[handle];
+		// gotta be actual null so that JSON.stringify picks it up.
+		return null;
 	}
 
 	// returns the object handle

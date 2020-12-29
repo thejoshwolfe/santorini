@@ -2,44 +2,65 @@ let boardState = new BoardState();
 
 // State changes
 function buildBuilding(x, y) {
-	_refreshObject(boardState.buildBuilding(x, y));
-	sendObj({command: "buildBuilding", x, y});
+	_sendAndRefresh(
+		boardState.buildBuilding(x, y),
+		{command: "buildBuilding", x, y});
 }
 function removeBuilding(x, y) {
-	_refreshObject(boardState.removeBuilding(x, y));
-	sendObj({command: "removeBuilding", x, y});
+	_sendAndRefresh(
+		boardState.removeBuilding(x, y),
+		{command: "removeBuilding", x, y});
 }
 
 function buildDome(x, y) {
-	_refreshObject(boardState.buildDome(x, y));
-	sendObj({command: "buildDome", x, y});
+	_sendAndRefresh(
+		boardState.buildDome(x, y),
+		{command: "buildDome", x, y});
 }
 function removeDome(x, y) {
-	_refreshObject(boardState.removeDome(x, y));
-	sendObj({command: "removeDome", x, y});
+	_sendAndRefresh(
+		boardState.removeDome(x, y),
+		{command: "removeDome", x, y});
 }
 
 function createPawn(x, y, objectType) {
-	_refreshObject(boardState.createPawn(x, y, objectType));
-	sendObj({command: "createPawn", x, y, objectType});
+	_sendAndRefresh(
+		boardState.createPawn(x, y, objectType),
+		{command: "createPawn", x, y, objectType});
 }
 function killPawn(x, y) {
-	_refreshObject(boardState.killPawn(x, y));
-	sendObj({command: "killPawn", x, y});
+	_sendAndRefresh(
+		boardState.killPawn(x, y),
+		{command: "killPawn", x, y});
 }
 function movePawn(fromX, fromY, toX, toY) {
-	_refreshObject(boardState.movePawn(fromX, fromY, toX, toY));
-	sendObj({command: "movePawn", fromX, fromY, toX, toY});
+	_sendAndRefresh(
+		boardState.movePawn(fromX, fromY, toX, toY),
+		{command: "movePawn", fromX, fromY, toX, toY});
 }
 
+function _sendAndRefresh(handle, obj) {
+	_refreshObject(handle);
+	obj.diff = {[handle]: boardState.getObjectInfo(handle)};
+	sendObj(obj);
+}
 function _refreshObject(handle) {
 	const objectInfo = boardState.getObjectInfo(handle);
 	refreshGraphics(handle, objectInfo);
 }
+function _refreshAllObjects(allHandles) {
+	clearAllGraphics();
+	for (let handle of allHandles) {
+		_refreshObject(handle);
+	}
+}
 
 function receiveObj(obj) {
 	switch (obj.command) {
-		case "welcome": return;
+		case "welcome":
+			boardState = new BoardState(obj.state);
+			_refreshAllObjects(Object.keys(obj.state));
+			return;
 		case "buildBuilding":
 			return _refreshObject(boardState.buildBuilding(obj.x, obj.y));
 		case "removeBuilding":
@@ -283,12 +304,11 @@ function animate() {
 	// debug stuff
 	setDebugOutput("mouse", mouseOverPosition);
 	setDebugOutput("input", inputState);
+	setDebugOutput("connected", isConnected());
 }
 
 // web socket api
-function onWebSocketOpen() {
-	console.log("socket open");
-}
+function onWebSocketOpen() {}
 function onWebSocketObj(obj) {
 	receiveObj(obj);
 }

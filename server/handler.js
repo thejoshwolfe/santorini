@@ -32,7 +32,7 @@ exports.handleConnection = function handleConnection(ws) {
 			return void ws.close();
 		}
 
-		broadcastObj(clientId, obj);
+		handleRequest(clientId, obj);
 	}
 
 	function onClose() {
@@ -46,11 +46,34 @@ exports.handleConnection = function handleConnection(ws) {
 		delete connectedSockets[clientId];
 	}
 
-	connectedSockets[clientId].sendObj({command: "welcome"});
+	connectedSockets[clientId].sendObj({
+		command: "welcome",
+		state: boardState,
+	});
 };
 
 // mapping from clientId -> {sendObj(), ...}
 const connectedSockets = {};
+
+// TODO: persist this database
+const boardState = {};
+
+function handleRequest(clientId, obj) {
+	// update database
+	if (obj.diff != null) {
+		for (let handle in obj.diff) {
+			const v = obj.diff[handle];
+			if (v != null) {
+				boardState[handle] = v;
+			} else {
+				delete boardState[handle];
+			}
+		}
+		delete obj.diff;
+	}
+
+	broadcastObj(clientId, obj);
+}
 
 function broadcastObj(originatorClientId, obj) {
 	for (let clientId in connectedSockets) {

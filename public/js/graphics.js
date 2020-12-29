@@ -162,3 +162,9 @@ function refreshGraphics(handle, objectInfo) {
 			handle);
 	} else assert(false);
 }
+function clearAllGraphics() {
+	for (let handle of Object.keys(threeObjects)) {
+		scene.remove(threeObjects[handle]);
+		delete threeObjects[handle];
+	}
+}
