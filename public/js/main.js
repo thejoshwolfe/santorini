@@ -321,8 +321,6 @@ function doActionAtPosition(x, y) {
 	updateMouseOverPosition();
 }
 
-
-// main loop
 function animate() {
 	requestAnimationFrame(animate);
 
@@ -334,5 +332,18 @@ function animate() {
 	setDebugOutput("input", inputState);
 }
 
+function onWebSocketOpen() {
+	setTimeout(doSomethingOrWhatever, 3000);
+	function doSomethingOrWhatever() {
+		if (!isConnected()) return;
+		sendObj({"command": "ping"});
+	}
+}
+function onWebSocketObj(obj) {
+	console.log("got message", obj);
+}
+
+
 // begin
 animate();
+openWebSocket();
