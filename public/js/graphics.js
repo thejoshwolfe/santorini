@@ -60,7 +60,7 @@ const RENDER_LAYER = 0; // enabled by default
 const INTERACT_LAYER = 1;
 
 // ground
-const theGround = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), cliffMaterial);
+const theGround = new THREE.Mesh(new THREE.BoxGeometry(5, 0.99, 5), cliffMaterial);
 theGround.position.set(0, -0.50, 0);
 theGround.layers.enable(INTERACT_LAYER);
 scene.add(theGround);
