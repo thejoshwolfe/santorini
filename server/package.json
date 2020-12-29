@@ -1,0 +1,9 @@
+{
+  "name": "santorini",
+  "description": "santorini",
+  "license": "ISC",
+  "repository": "N/A",
+  "dependencies": {
+    "ws": "~7.4.1"
+  }
+}
