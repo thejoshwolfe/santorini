@@ -178,33 +178,53 @@ function onContextMenu(event) {
 }
 window.addEventListener("contextmenu", onContextMenu, false);
 
+function toggleInputState(newInputState) {
+	const isTheSame = (() => {
+		// This assumes you have at most 1 key in the input state.
+		const oldK = Object.keys(inputState)[0];
+		const newK = Object.keys(newInputState)[0];
+		if (oldK !== newK) return false;
+		const oldV = inputState[oldK];
+		const newV = newInputState[newK];
+		// This assumes the values are primitives, which they are not in general.
+		return oldV === newV;
+	})();
+	if (isTheSame) {
+		// turn it off.
+		inputState = {};
+	} else {
+		// turn it on.
+		inputState = newInputState;
+	}
+}
+
 function onKeyDown(event) {
 	const modifiers = getModifiers(event);
 	if (modifiers !== 0) return;
 	switch (event.key) {
 		case "d":
-			inputState = {pendingDomeBuild: true};
+			toggleInputState({pendingDomeBuild: true});
 			break;
 		case "z":
-			inputState = {pendingUndo: true};
+			toggleInputState({pendingUndo: true});
 			break;
 		case "k":
-			inputState = {pendingKill: true};
+			toggleInputState({pendingKill: true});
 			break;
 		case "e":
 			endTurn();
 			break;
 		case "1":
-			inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_F};
+			toggleInputState({pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_F});
 			break;
 		case "2":
-			inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_M};
+			toggleInputState({pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_M});
 			break;
 		case "3":
-			inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_F};
+			toggleInputState({pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_F});
 			break;
 		case "4":
-			inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_M};
+			toggleInputState({pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_M});
 			break;
 		case "Escape":
 			inputState = {};
@@ -217,29 +237,26 @@ function onKeyDown(event) {
 window.addEventListener("keydown", onKeyDown, false);
 
 // Buttons
-window.document.getElementById("cancel_button").addEventListener("click", function() {
-	inputState = {};
-});
 window.document.getElementById("create_pawn_blue_f_button").addEventListener("click", function() {
-	inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_F};
+	toggleInputState({pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_F});
 });
 window.document.getElementById("create_pawn_blue_m_button").addEventListener("click", function() {
-	inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_M};
+	toggleInputState({pendingPawnCreation: OBJECT_TYPE_PAWN_BLUE_M});
 });
 window.document.getElementById("create_pawn_purple_f_button").addEventListener("click", function() {
-	inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_F};
+	toggleInputState({pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_F});
 });
 window.document.getElementById("create_pawn_purple_m_button").addEventListener("click", function() {
-	inputState = {pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_M};
+	toggleInputState({pendingPawnCreation: OBJECT_TYPE_PAWN_PURPLE_M});
 });
 window.document.getElementById("build_dome_button").addEventListener("click", function() {
-	inputState = {pendingDomeBuild: true};
+	toggleInputState({pendingDomeBuild: true});
 });
 window.document.getElementById("undo_button").addEventListener("click", function() {
-	inputState = {pendingUndo: true};
+	toggleInputState({pendingUndo: true});
 });
 window.document.getElementById("kill_pawn_button").addEventListener("click", function() {
-	inputState = {pendingKill: true};
+	toggleInputState({pendingKill: true});
 });
 window.document.getElementById("end_turn_button").addEventListener("click", function() {
 	endTurn();
@@ -258,8 +275,6 @@ function refreshButtonStates() {
 	function setElementEnabled(elementId, value) {
 		window.document.getElementById(elementId).disabled = !value;
 	}
-
-	setElementEnabled("cancel_button", Object.keys(inputState).length > 0);
 
 	setElementShown("create_pawn_blue_f_button", boardState.getRemainingCount(OBJECT_TYPE_PAWN_BLUE_F) > 0);
 	setElementShown("create_pawn_blue_m_button", boardState.getRemainingCount(OBJECT_TYPE_PAWN_BLUE_M) > 0);
