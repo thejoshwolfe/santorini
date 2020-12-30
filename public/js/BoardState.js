@@ -8,19 +8,35 @@ class BoardState {
 		// stacks of object handles cached by location.
 		this.objectStacks = [...Array(25)].map(() => []);
 
+		// counts of each type that can be placed.
+		this.objectTypeToRemainingCount = {
+			[OBJECT_TYPE_BUILDING]: 999, // TODO: 22, 18, 14
+			[OBJECT_TYPE_DOME]: 18,
+			[OBJECT_TYPE_PAWN_BLUE_F]: 1,
+			[OBJECT_TYPE_PAWN_BLUE_M]: 1,
+			[OBJECT_TYPE_PAWN_PURPLE_F]: 1,
+			[OBJECT_TYPE_PAWN_PURPLE_M]: 1,
+		};
+
 		// Load existing objects
 		for (let handle in existingState) {
 			this.objects[handle] = existingState[handle];
 			const {objectType, x, y, height} = this.objects[handle];
 			assert(isValidObjectType(objectType));
 			assert(isValidCoordinates(x, y, height));
+
+			// stack
 			const stack = this.objectStacks[this._coordToIndex(x, y)];
 			const i = height - 1;
 			assert(stack[i] == null);
 			stack[i] = handle;
+
+			// count
+			assert(this.objectTypeToRemainingCount[objectType] > 0);
+			this.objectTypeToRemainingCount[objectType]--;
 		}
 
-		// sanity check the state is coherent
+		// check the state is coherent
 		for (let stack of this.objectStacks) {
 			let foundOccupant = false;
 			for (let i = 0; i < stack.length; i++) {
@@ -55,16 +71,6 @@ class BoardState {
 			height: buildingHeight + 1,
 		});
 	}
-	// returns the object handle
-	removeBuilding(x, y) {
-		const stack = this.objectStacks[this._coordToIndex(x, y)];
-		assert(stack.length > 0, "removing from empty stack");
-		const handle = stack.pop();
-		const {objectType} = this.objects[handle];
-		assert(objectType === OBJECT_TYPE_BUILDING, "can't remove building with something on it");
-		delete this.objects[handle];
-		return handle;
-	}
 
 	// returns the object handle
 	buildDome(x, y) {
@@ -77,16 +83,6 @@ class BoardState {
 			x, y,
 			height: buildingHeight + 1,
 		});
-	}
-	// returns the object handle
-	removeDome(x, y, height) {
-		const stack = this.objectStacks[this._coordToIndex(x, y)];
-		assert(stack.length > 0, "removing from empty stack");
-		const handle = stack.pop();
-		const {objectType} = this.objects[handle];
-		assert(objectType === OBJECT_TYPE_DOME, "expected dome");
-		delete this.objects[handle];
-		return handle;
 	}
 
 	// returns the object handle
@@ -101,16 +97,6 @@ class BoardState {
 			x, y,
 			height: buildingHeight + 1,
 		});
-	}
-	// returns the object handle
-	killPawn(x, y, height) {
-		const stack = this.objectStacks[this._coordToIndex(x, y)];
-		assert(stack.length > 0, "removing from empty stack");
-		const handle = stack.pop();
-		const {objectType} = this.objects[handle];
-		assert(objectTypeIsPawn(objectType), "expected pawn");
-		delete this.objects[handle];
-		return handle;
 	}
 	// returns the object handle
 	movePawn(fromX, fromY, toX, toY) {
@@ -139,6 +125,17 @@ class BoardState {
 		return pawnHandle;
 	}
 
+	// returns the object handle
+	removeTopOfStack(x, y) {
+		const stack = this.objectStacks[this._coordToIndex(x, y)];
+		assert(stack.length > 0, "removing from empty stack");
+		const handle = stack.pop();
+		const {objectType} = this.objects[handle];
+		delete this.objects[handle];
+		this.objectTypeToRemainingCount[objectType]++;
+		return handle;
+	}
+
 	// returns {buildingHeight, occupantHandle}
 	getBuildingTop(x, y) {
 		return this._getBuildingTop(this._coordToIndex(x, y));
@@ -164,11 +161,17 @@ class BoardState {
 		return {buildingHeight, occupantHandle};
 	}
 
+	getRemainingCount(objectType) {
+		return this.objectTypeToRemainingCount[objectType];
+	}
+
 	_createObject(objectInfo) {
 		const handle = generateId();
 		assert(!(handle in this.objects), "random id collision");
+		const {objectType, x, y} = objectInfo;
+		assert(this.objectTypeToRemainingCount[objectType] > 0);
+		this.objectTypeToRemainingCount[objectType]--;
 		this.objects[handle] = objectInfo;
-		const {x, y} = objectInfo;
 		this.objectStacks[this._coordToIndex(x, y)].push(handle);
 		return handle;
 	}

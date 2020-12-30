@@ -3,41 +3,35 @@ let role = null;
 
 // State changes
 function buildBuilding(x, y) {
+	if (boardState.getRemainingCount(OBJECT_TYPE_BUILDING) <= 0) return;
 	_sendAndRefresh(
 		boardState.buildBuilding(x, y),
 		{command: "buildBuilding", x, y});
 }
-function removeBuilding(x, y) {
-	_sendAndRefresh(
-		boardState.removeBuilding(x, y),
-		{command: "removeBuilding", x, y});
-}
 
 function buildDome(x, y) {
+	if (boardState.getRemainingCount(OBJECT_TYPE_DOME) <= 0) return;
 	_sendAndRefresh(
 		boardState.buildDome(x, y),
 		{command: "buildDome", x, y});
 }
-function removeDome(x, y) {
-	_sendAndRefresh(
-		boardState.removeDome(x, y),
-		{command: "removeDome", x, y});
-}
 
 function createPawn(x, y, objectType) {
+	if (boardState.getRemainingCount(objectType) <= 0) return;
 	_sendAndRefresh(
 		boardState.createPawn(x, y, objectType),
 		{command: "createPawn", x, y, objectType});
-}
-function killPawn(x, y) {
-	_sendAndRefresh(
-		boardState.killPawn(x, y),
-		{command: "killPawn", x, y});
 }
 function movePawn(fromX, fromY, toX, toY) {
 	_sendAndRefresh(
 		boardState.movePawn(fromX, fromY, toX, toY),
 		{command: "movePawn", fromX, fromY, toX, toY});
+}
+
+function removeTopOfStack(x, y) {
+	_sendAndRefresh(
+		boardState.removeTopOfStack(x, y),
+		{command: "removeTopOfStack", x, y});
 }
 
 function _sendAndRefresh(handle, obj) {
@@ -67,18 +61,14 @@ function receiveObj(obj) {
 
 		case "buildBuilding":
 			return _refreshObject(boardState.buildBuilding(obj.x, obj.y));
-		case "removeBuilding":
-			return _refreshObject(boardState.removeBuilding(obj.x, obj.y));
 		case "buildDome":
 			return _refreshObject(boardState.buildDome(obj.x, obj.y));
-		case "removeDome":
-			return _refreshObject(boardState.removeDome(obj.x, obj.y));
 		case "createPawn":
 			return _refreshObject(boardState.createPawn(obj.x, obj.y, obj.objectType));
-		case "killPawn":
-			return _refreshObject(boardState.killPawn(obj.x, obj.y));
 		case "movePawn":
 			return _refreshObject(boardState.movePawn(obj.fromX, obj.fromY, obj.toX, obj.toY));
+		case "removeTopOfStack":
+			return _refreshObject(boardState.removeTopOfStack(obj.x, obj.y));
 
 		case "turnEnded":
 			whoseTurn = obj.whoseTurn;
@@ -303,10 +293,10 @@ function doActionAtPosition(x, y) {
 		// unbuild
 		if (occupantHandle == null) {
 			if (buildingHeight > 0) {
-				removeBuilding(x, y);
+				removeTopOfStack(x, y);
 			}
 		} else if (occupantObjectType === OBJECT_TYPE_DOME) {
-			removeDome(x, y);
+			removeTopOfStack(x, y);
 		} else if (objectTypeIsPawn(occupantObjectType)) {
 			// This is not how you kill a pawn.
 		} else assert(false);
@@ -315,7 +305,7 @@ function doActionAtPosition(x, y) {
 	} else if (pendingKill) {
 		// kill
 		if (objectTypeIsPawn(occupantObjectType)) {
-			killPawn(x, y);
+			removeTopOfStack(x, y);
 			inputState = {};
 		}
 
