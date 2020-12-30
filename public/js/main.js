@@ -2,11 +2,11 @@ let boardState = new BoardState();
 let role = null;
 
 // State changes
-function buildBuilding(x, y) {
-	if (boardState.getRemainingCount(OBJECT_TYPE_BUILDING) <= 0) return;
+function buildBuilding(x, y, objectType) {
+	if (boardState.getRemainingCount(objectType) <= 0) return;
 	_sendAndRefresh(
-		boardState.buildBuilding(x, y),
-		{command: "buildBuilding", x, y});
+		boardState.buildBuilding(x, y, objectType),
+		{command: "buildBuilding", x, y, objectType});
 }
 
 function buildDome(x, y) {
@@ -60,7 +60,7 @@ function receiveObj(obj) {
 			return;
 
 		case "buildBuilding":
-			return _refreshObject(boardState.buildBuilding(obj.x, obj.y));
+			return _refreshObject(boardState.buildBuilding(obj.x, obj.y, obj.objectType));
 		case "buildDome":
 			return _refreshObject(boardState.buildDome(obj.x, obj.y));
 		case "createPawn":
@@ -321,7 +321,7 @@ function doActionAtPosition(x, y) {
 				if (height === 4 || pendingDomeBuild) {
 					buildDome(x, y);
 				} else {
-					buildBuilding(x, y);
+					buildBuilding(x, y, buildingHeightToObjectType(height));
 				}
 			}
 			inputState = {};

@@ -4,12 +4,39 @@ const PLAYER_PURPLE = "purple";
 const PLAYER_SPECTATOR = "spectator";
 
 // Object types
-const OBJECT_TYPE_BUILDING = "building";
+const OBJECT_TYPE_BUILDING_1 = "building_1";
+const OBJECT_TYPE_BUILDING_2 = "building_2";
+const OBJECT_TYPE_BUILDING_3 = "building_3";
 const OBJECT_TYPE_DOME = "dome";
 const OBJECT_TYPE_PAWN_BLUE_F = "blue_f";
 const OBJECT_TYPE_PAWN_BLUE_M = "blue_m";
 const OBJECT_TYPE_PAWN_PURPLE_F = "purple_f";
 const OBJECT_TYPE_PAWN_PURPLE_M = "purple_m";
+
+function objectTypeIsBuilding(objectType) {
+	switch (objectType) {
+		case OBJECT_TYPE_BUILDING_1: return true;
+		case OBJECT_TYPE_BUILDING_2: return true;
+		case OBJECT_TYPE_BUILDING_3: return true;
+	}
+	return false;
+}
+function objectTypeToBuildingHeight(objectType) {
+	switch (objectType) {
+		case OBJECT_TYPE_BUILDING_1: return 1;
+		case OBJECT_TYPE_BUILDING_2: return 2;
+		case OBJECT_TYPE_BUILDING_3: return 3;
+	}
+	assert(false);
+}
+function buildingHeightToObjectType(height) {
+	switch (height) {
+		case 1: return OBJECT_TYPE_BUILDING_1;
+		case 2: return OBJECT_TYPE_BUILDING_2;
+		case 3: return OBJECT_TYPE_BUILDING_3;
+	}
+	assert(false);
+}
 
 function objectTypeIsPawn(objectType) {
 	switch (objectType) {
@@ -34,7 +61,9 @@ function objectTypeToPawnPlayer(objectType) {
 function isValidObjectType(objectType) {
 	if (typeof objectType !== "string") return false;
 	switch (objectType) {
-		case OBJECT_TYPE_BUILDING:
+		case OBJECT_TYPE_BUILDING_1:
+		case OBJECT_TYPE_BUILDING_2:
+		case OBJECT_TYPE_BUILDING_3:
 		case OBJECT_TYPE_DOME:
 		case OBJECT_TYPE_PAWN_BLUE_F:
 		case OBJECT_TYPE_PAWN_BLUE_M:

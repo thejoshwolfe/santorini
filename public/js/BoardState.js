@@ -2,7 +2,7 @@ class BoardState {
 	constructor(existingState = {}) {
 		// Mapping of object handle -> object info.
 		this.objects = {
-			// "abc123": {objectType: OBJECT_TYPE_BUILDING, x: 0, y: 0, height: 1},
+			// "abc123": {objectType: OBJECT_TYPE_BUILDING_1, x: 0, y: 0, height: 1},
 		};
 
 		// stacks of object handles cached by location.
@@ -10,7 +10,9 @@ class BoardState {
 
 		// counts of each type that can be placed.
 		this.objectTypeToRemainingCount = {
-			[OBJECT_TYPE_BUILDING]: 999, // TODO: 22, 18, 14
+			[OBJECT_TYPE_BUILDING_1]: 22,
+			[OBJECT_TYPE_BUILDING_2]: 18,
+			[OBJECT_TYPE_BUILDING_3]: 14,
 			[OBJECT_TYPE_DOME]: 18,
 			[OBJECT_TYPE_PAWN_BLUE_F]: 1,
 			[OBJECT_TYPE_PAWN_BLUE_M]: 1,
@@ -40,11 +42,14 @@ class BoardState {
 		for (let stack of this.objectStacks) {
 			let foundOccupant = false;
 			for (let i = 0; i < stack.length; i++) {
+				assert(!foundOccupant);
 				assert(stack[i] != null);
 				const {objectType, x, y, height} = this.objects[stack[i]];
-				if (objectType !== OBJECT_TYPE_BUILDING) {
+				if (objectTypeIsBuilding(objectType)) {
+					// building
+					assert(i + 1 === objectTypeToBuildingHeight(objectType));
+				} else {
 					// occupant
-					assert(!foundOccupant);
 					foundOccupant = true;
 				}
 			}
@@ -59,14 +64,14 @@ class BoardState {
 	}
 
 	// returns the object handle
-	buildBuilding(x, y) {
+	buildBuilding(x, y, objectType) {
 		const index = this._coordToIndex(x, y);
 		const {buildingHeight, occupantHandle} = this._getBuildingTop(index);
-		assert(buildingHeight < 4, "can't build higher than 4 levels");
+		assert(buildingHeight + 1 === objectTypeToBuildingHeight(objectType));
 		assert(occupantHandle == null, "can't build on an occupant");
 
 		return this._createObject({
-			objectType: OBJECT_TYPE_BUILDING,
+			objectType,
 			x, y,
 			height: buildingHeight + 1,
 		});
@@ -148,7 +153,7 @@ class BoardState {
 		for (let i = stack.length - 1; i >= 0; i--) {
 			const handle = stack[i];
 			const {objectType, height} = this.objects[handle];
-			if (objectType === OBJECT_TYPE_BUILDING) {
+			if (objectTypeIsBuilding(objectType)) {
 				buildingHeight = height;
 				break;
 			} else {

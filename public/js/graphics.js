@@ -143,8 +143,8 @@ function refreshGraphics(handle, objectInfo) {
 	if (objectInfo == null) return;
 
 	const {objectType, x, y, height} = objectInfo;
-	if (objectType === OBJECT_TYPE_BUILDING) {
-		const i = height - 1;
+	if (objectTypeIsBuilding(objectType)) {
+		const i = objectTypeToBuildingHeight(objectType) - 1;
 		initThreeObject(
 			new THREE.Mesh(blockGeometries[i], buildingMaterial),
 			x, blockYPositions[i], y,
