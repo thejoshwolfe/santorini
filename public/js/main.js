@@ -245,6 +245,45 @@ window.document.getElementById("end_turn_button").addEventListener("click", func
 	endTurn();
 });
 
+function refreshButtonStates() {
+	function setElementClass(elementId, className, value) {
+		window.document.getElementById(elementId).classList.toggle(className, value);
+	}
+	function setElementShown(elementId, value) {
+		setElementClass(elementId, "hidden", !value);
+	}
+	function setElementActive(elementId, value) {
+		setElementClass(elementId, "active_button", !!value);
+	}
+	function setElementEnabled(elementId, value) {
+		window.document.getElementById(elementId).disabled = !value;
+	}
+
+	setElementEnabled("cancel_button", Object.keys(inputState).length > 0);
+
+	setElementShown("create_pawn_blue_f_button", boardState.getRemainingCount(OBJECT_TYPE_PAWN_BLUE_F) > 0);
+	setElementShown("create_pawn_blue_m_button", boardState.getRemainingCount(OBJECT_TYPE_PAWN_BLUE_M) > 0);
+	setElementShown("create_pawn_purple_f_button", boardState.getRemainingCount(OBJECT_TYPE_PAWN_PURPLE_F) > 0);
+	setElementShown("create_pawn_purple_m_button", boardState.getRemainingCount(OBJECT_TYPE_PAWN_PURPLE_M) > 0);
+	setElementEnabled("create_pawn_blue_f_button", isMyTurn());
+	setElementEnabled("create_pawn_blue_m_button", isMyTurn());
+	setElementEnabled("create_pawn_purple_f_button", isMyTurn());
+	setElementEnabled("create_pawn_purple_m_button", isMyTurn());
+	setElementActive("create_pawn_blue_f_button", inputState.pendingPawnCreation === OBJECT_TYPE_PAWN_BLUE_F);
+	setElementActive("create_pawn_blue_m_button", inputState.pendingPawnCreation === OBJECT_TYPE_PAWN_BLUE_M);
+	setElementActive("create_pawn_purple_f_button", inputState.pendingPawnCreation === OBJECT_TYPE_PAWN_PURPLE_F);
+	setElementActive("create_pawn_purple_m_button", inputState.pendingPawnCreation === OBJECT_TYPE_PAWN_PURPLE_M);
+
+	setElementEnabled("build_dome_button", isMyTurn() && boardState.getRemainingCount(OBJECT_TYPE_DOME) > 0);
+	setElementActive("build_dome_button", inputState.pendingDomeBuild);
+	setElementEnabled("kill_pawn_button", isMyTurn());
+	setElementActive("kill_pawn_button", inputState.pendingKill);
+	setElementEnabled("undo_button", isMyTurn());
+	setElementActive("undo_button", inputState.pendingUndo);
+
+	setElementEnabled("end_turn_button", isMyTurn());
+}
+
 // input state
 let inputState = {
 	//movingPawnPosition: {x, y},
@@ -340,6 +379,7 @@ function animate() {
 	requestAnimationFrame(animate);
 
 	// render
+	refreshButtonStates();
 	renderer.render(scene, camera);
 
 	// debug stuff
